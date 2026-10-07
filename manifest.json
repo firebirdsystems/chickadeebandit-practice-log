@@ -1,0 +1,160 @@
+{
+  "$schema": "https://chickadeebandit.com/manifest-schema.json",
+  "id": "practice-log",
+  "name": "Practice Log",
+  "version": "1.0.0",
+  "description": "Kids time or log practice for piano, a language, free throws or anything else. A parent verifies each session, and verified minutes count toward a weekly goal.",
+  "entrypoint": "index.html",
+  "runtime": "static",
+  "category": "kids",
+  "tags": [
+    "practice",
+    "music",
+    "kids",
+    "goals",
+    "education"
+  ],
+  "data_access": {
+    "reads": [
+      "family.members"
+    ],
+    "writes": []
+  },
+  "permissions": {
+    "default_audience": "everyone",
+    "requires_approval": false
+  },
+  "storage": "db",
+  "preload": {
+    "activities": {
+      "sql": "SELECT * FROM app_practice_log__activities WHERE archived_at = '' ORDER BY created_at, id LIMIT 200"
+    },
+    "sessions": {
+      "sql": "SELECT * FROM app_practice_log__sessions WHERE practice_date >= date(?, '-35 days') ORDER BY practice_date DESC, created_at DESC LIMIT 500",
+      "params": [
+        ":today"
+      ]
+    },
+    "timers": {
+      "sql": "SELECT * FROM app_practice_log__timers LIMIT 50"
+    }
+  },
+  "member_references": {
+    "activities": [
+      {
+        "column": "member_id",
+        "on_removed": "delete",
+        "dependent_tables": [
+          {
+            "table": "sessions",
+            "foreign_key": "activity_id"
+          },
+          {
+            "table": "timers",
+            "foreign_key": "activity_id"
+          }
+        ]
+      },
+      {
+        "column": "created_by",
+        "on_removed": "keep"
+      }
+    ],
+    "sessions": [
+      {
+        "column": "member_id",
+        "on_removed": "delete"
+      },
+      {
+        "column": "verified_by",
+        "on_removed": "keep"
+      }
+    ],
+    "timers": {
+      "column": "member_id",
+      "on_removed": "delete",
+      "id_column": "rowid"
+    }
+  },
+  "row_policies": {
+    "activities": {
+      "kind": "adult_writable",
+      "member_read_column": "member_id"
+    },
+    "sessions": {
+      "kind": "owner_only",
+      "member_column": "member_id",
+      "adults_bypass": true,
+      "member_can_update": false,
+      "column_write_acls": {
+        "verified_by": {
+          "writable_by": [
+            "adult"
+          ]
+        },
+        "verified_at": {
+          "writable_by": [
+            "adult"
+          ]
+        }
+      }
+    },
+    "timers": {
+      "kind": "owner_only",
+      "member_column": "member_id",
+      "adults_bypass": true
+    }
+  },
+  "delete_cascades": {
+    "activities": [
+      {
+        "table": "sessions",
+        "foreign_key": "activity_id"
+      },
+      {
+        "table": "timers",
+        "foreign_key": "activity_id"
+      }
+    ]
+  },
+  "glance": {
+    "source": {
+      "kind": "sql",
+      "query": "SELECT COUNT(*) AS n FROM app_practice_log__sessions WHERE verified_at = '' AND practice_date >= date(:today, '-35 days') LIMIT 1"
+    },
+    "display": {
+      "template": "badge",
+      "count": "n",
+      "label": "practice sessions to verify",
+      "severity": "info"
+    }
+  },
+  "ai_access": {
+    "allowed": true,
+    "mode": "read",
+    "db_exports": [
+      "activities",
+      "week_totals",
+      "recent_sessions"
+    ]
+  },
+  "publishes": [
+    "practice-log.session_verified",
+    "practice-log.weekly_goal_met"
+  ],
+  "publish_acls": {
+    "practice-log.session_verified": {
+      "require_role": "adult"
+    },
+    "practice-log.weekly_goal_met": {
+      "require_role": "adult"
+    }
+  },
+  "nav": {
+    "label": "Practice"
+  },
+  "resource_limits": {
+    "max_db_bytes": 52428800
+  },
+  "icon": "🎹"
+}

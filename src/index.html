@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practice Log</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: var(--hub-bg, #f9fafb);
+      --surface: var(--hub-surface, #ffffff);
+      --border: var(--hub-border, #e5e7eb);
+      --text: var(--hub-text, #111827);
+      --muted: var(--hub-text-muted, #6b7280);
+      --accent: var(--hub-primary, #2563eb);
+      --accent-hover: var(--hub-primary-hover, #1d4ed8);
+      --accent-fg: var(--hub-primary-fg, #ffffff);
+      --radius: var(--hub-radius, 10px);
+      --red: var(--hub-tint-danger-fg, #b91c1c);
+      --red-soft: var(--hub-tint-danger, #fee2e2);
+      --green: #16a34a;
+      --green-soft: var(--hub-tint-success, #dcfce7);
+      --amber: var(--hub-tint-warning-fg, #d97706);
+      --amber-soft: var(--hub-tint-warning, #fef3c7);
+    }
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--hub-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      font-size: var(--hub-font-size, 15px);
+      line-height: 1.45;
+    }
+    .app { max-width: 680px; margin: 0 auto; padding: 16px 16px 56px; }
+    .loading { color: var(--muted); text-align: center; padding: 40px 16px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    h1 { font-size: 1.35rem; line-height: 1.2; }
+    h2 { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 800; margin: 22px 0 8px; }
+    .muted { color: var(--muted); }
+    .tiny { font-size: .8rem; }
+    .stack { display: grid; gap: 10px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+    .error { background: var(--red-soft); color: var(--red); padding: 9px 12px; border-radius: 8px; margin-bottom: 10px; font-size: .88rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: 1px solid transparent; border-radius: 8px; padding: 8px 14px;
+      font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer;
+      min-height: 40px; background: var(--accent); color: var(--accent-fg);
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-sm { min-height: 32px; padding: 4px 10px; font-size: .8rem; }
+    .btn-danger { background: transparent; color: var(--red); border-color: var(--border); }
+    .btn-danger:hover { background: var(--red-soft); }
+    .btn-link { background: none; border: 0; color: var(--muted); font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; padding: 4px 6px; min-height: 32px; }
+    .btn-link:hover { color: var(--text); }
+
+    .demo-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--amber-soft); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: .8rem; color: var(--hub-tint-warning-fg, #78350f); }
+    .demo-bar button { font: inherit; padding: 3px 10px; border-radius: 6px; border: 1px solid #fcd34d; background: var(--surface); color: #78350f; cursor: pointer; }
+    .demo-bar button.on { background: #fde68a; font-weight: 700; }
+
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tab { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font: inherit; font-size: .85rem; cursor: pointer; color: var(--muted); min-height: 34px; }
+    .tab.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 700; }
+
+    /* Running timer */
+    .timer { border-color: var(--accent); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .timer-main { flex: 1; min-width: 150px; }
+    .timer-clock { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .timer-other .timer-clock { font-size: 1.1rem; }
+    .pulse { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--red); margin-right: 6px; animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: .25; } }
+    @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    /* Activity card */
+    .act-head { display: flex; align-items: flex-start; gap: 12px; }
+    .act-icon { font-size: 1.9rem; line-height: 1; flex-shrink: 0; }
+    .act-body { flex: 1; min-width: 0; }
+    .act-name { font-weight: 800; font-size: 1.02rem; overflow-wrap: anywhere; }
+    .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 12px 0 8px; }
+    .day { text-align: center; }
+    .day-dot {
+      width: 100%; max-width: 44px; aspect-ratio: 1; margin: 0 auto; border-radius: 50%;
+      border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 800; color: var(--muted); background: var(--surface);
+    }
+    .day.met .day-dot { background: var(--green); border-color: var(--green); color: #fff; }
+    .day.waiting .day-dot { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+    .day.partial .day-dot { border-color: var(--accent); color: var(--text); }
+    .day.future .day-dot { opacity: .45; }
+    .day.today .day-letter { color: var(--text); font-weight: 800; }
+    .day-letter { font-size: .7rem; color: var(--muted); margin-top: 3px; }
+    .act-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .goal-met { color: var(--green); font-weight: 800; }
+
+    /* Session rows */
+    .row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+    .row:first-child { border-top: 0; padding-top: 0; }
+    .row:last-child { padding-bottom: 0; }
+    .row-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .row-body { flex: 1; min-width: 0; }
+    .row-title { font-weight: 700; overflow-wrap: anywhere; }
+    .row-note { font-style: italic; overflow-wrap: anywhere; }
+    .badge { display: inline-block; font-size: .7rem; font-weight: 800; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .badge.ok { background: var(--green-soft); color: var(--green); }
+    .badge.wait { background: var(--amber-soft); color: var(--amber); }
+    .empty { color: var(--muted); text-align: center; padding: 30px 16px; }
+    .empty-icon { font-size: 2.6rem; margin-bottom: 8px; }
+
+    .search-row { margin-bottom: 10px; }
+    .search-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit; background: var(--surface); color: var(--text); }
+    .search-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal { background: var(--surface); border-radius: var(--radius); padding: 22px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; }
+    .field { display: grid; gap: 4px; margin-bottom: 14px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label, .label { font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 800; }
+    input[type=text], input[type=number], input[type=date], select, textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 9px 11px; font: inherit; background: var(--surface); color: var(--text);
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    textarea { min-height: 60px; resize: vertical; }
+    .icons { display: flex; flex-wrap: wrap; gap: 6px; }
+    .icon-choice { font-size: 1.3rem; width: 40px; height: 40px; border-radius: 8px; border: 2px solid var(--border); background: var(--surface); cursor: pointer; }
+    .icon-choice.on { border-color: var(--accent); background: var(--bg); }
+    .quick { display: flex; flex-wrap: wrap; gap: 6px; }
+    .quick button { font: inherit; font-size: .85rem; font-weight: 700; padding: 6px 12px; border-radius: 18px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; min-height: 34px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+    .modal-actions .spacer { flex: 1; }
+  </style>
+  <base href="/run/practice-log/">
+</head>
+<body>
+<div id="root" class="app"><div class="loading">Loading…</div></div>
+
+<script type="module">
+import {
+  esc, isAdult, hubConfirm, hubToday, searchMatch,
+  createDbHelper, createEventsHelper, sendHubNotification, hubAppUrl,
+} from "/hub-sdk.js";
+import {
+  ICON_CHOICES, DEFAULT_ICON, MAX_MINUTES,
+  addDays, isDate, weekStart, dayLetter, dayLabel,
+  clampMinutes, formatMinutes, elapsedMs, timerMinutes, formatClock,
+  canManageActivities, canVerify, canLogFor, canEditSession, isVerified,
+  activityWeek, crossedWeeklyGoal, pendingSessions, membersWithActivities,
+  searchableFields,
+} from "./logic.js";
+
+// --- Hub runtime globals (empty in demo mode) --------------------------------
+const CONTEXT = window.__CONTEXT_URL ?? "";
+const DB_URL = window.__DB_URL ?? "";
+const APP_ID = window.__APP_ID ?? "practice-log";
+const HUB_MEMBER = window.__CURRENT_MEMBER ?? null;
+const DEMO = !DB_URL;
+
+const db = createDbHelper(DB_URL);
+const events = createEventsHelper(DEMO ? "" : (window.__EVENTS_URL ?? "/api/events"), APP_ID);
+
+// The first-render reads. Each is declared, byte for byte, in manifest.preload,
+// so the hub answers this batch from the document it already rendered. Keep the
+// two copies identical — __tests__/preload.test.mjs checks that they are.
+const SQL_ACTIVITIES = "SELECT * FROM app_practice_log__activities WHERE archived_at = '' ORDER BY created_at, id LIMIT 200";
+const SQL_SESSIONS = "SELECT * FROM app_practice_log__sessions WHERE practice_date >= date(?, '-35 days') ORDER BY practice_date DESC, created_at DESC LIMIT 500";
+const SQL_TIMERS = "SELECT * FROM app_practice_log__timers LIMIT 50";
+
+// --- App state ---------------------------------------------------------------
+let members = [];
+let memberMap = new Map();
+let demoMe = null;
+let activities = [];
+let archived = null;      // fetched only when an adult asks to see them
+let sessions = [];
+let timers = [];
+let viewMember = null;    // adults: null = everyone. A child always sees themself.
+let searchQ = "";
+let error = "";
+let modalEl = null;
+let ready = false;
+
+const me = () => demoMe ?? HUB_MEMBER;
+const today = () => hubToday();
+const nowIso = () => new Date().toISOString();
+// A form control by name. Always through form.elements: "name" and "title" are
+// also properties of the form element itself.
+const field = (form, name) => form.elements.namedItem(name);
+const memberName = (id) => memberMap.get(id)?.name ?? "Someone";
+const activityById = (id) => activities.find(a => a.id === id) ?? archived?.find(a => a.id === id) ?? null;
+const adults = () => members.filter(m => isAdult(m));
+
+// --- Loading -----------------------------------------------------------------
+async function loadMembers() {
+  if (!CONTEXT) {
+    members = [
+      { id: "demo-parent", name: "Sam", role: "adult" },
+      { id: "demo-maya", name: "Maya", role: "child" },
+      { id: "demo-leo", name: "Leo", role: "child" },
+    ];
+  } else {
+    try {
+      const res = await fetch(`${CONTEXT}?keys=family.members`);
+      members = ((await res.json())["family.members"]) ?? [];
+    } catch { members = []; }
+  }
+  memberMap = new Map(members.map(m => [m.id, m]));
+  if (!HUB_MEMBER && !demoMe) demoMe = members.find(m => !isAdult(m)) ?? members[0] ?? null;
+}
+
+function demoData() {
+  const t = today();
+  const stamp = "2026-01-01T12:00:00.000Z";
+  activities = [
+    { id: "demo-piano", member_id: "demo-maya", name: "Piano", icon: "🎹", target_minutes: 20, target_days: 5, archived_at: "", created_by: "demo-parent", created_at: stamp },
+    { id: "demo-spanish", member_id: "demo-maya", name: "Spanish", icon: "🗣️", target_minutes: 10, target_days: 4, archived_at: "", created_by: "demo-parent", created_at: stamp },
+    { id: "demo-hoops", member_id: "demo-leo", name: "Free throws", icon: "🏀", target_minutes: 15, target_days: 3, archived_at: "", created_by: "demo-parent", created_at: stamp },
+  ];
+  const s = (id, activity, member, back, minutes, verified, note = "", source = "timer") => ({
+    id, activity_id: activity, member_id: member, practice_date: addDays(t, -back), minutes, source, note,
+    verified_by: verified ? "demo-parent" : "", verified_at: verified ? stamp : "", created_at: `${addDays(t, -back)}T17:00:00.000Z`,
+  });
+  sessions = [
+    s("demo-s1", "demo-piano", "demo-maya", 0, 25, false, "Left hand finally clicked"),
+    s("demo-s2", "demo-piano", "demo-maya", 1, 20, true),
+    s("demo-s3", "demo-spanish", "demo-maya", 1, 10, true, "", "manual"),
+    s("demo-s4", "demo-piano", "demo-maya", 2, 22, true),
+    s("demo-s5", "demo-hoops", "demo-leo", 0, 15, false, "", "manual"),
+    s("demo-s6", "demo-hoops", "demo-leo", 2, 18, true),
+  ].sort((a, b) => b.practice_date.localeCompare(a.practice_date));
+  timers = [];
+}
+
+async function loadData() {
+  if (DEMO) { demoData(); return; }
+  const [a, s, t] = await db.batch([
+    { sql: SQL_ACTIVITIES },
+    { sql: SQL_SESSIONS, params: [today()] },
+    { sql: SQL_TIMERS },
+  ]);
+  activities = a.rows ?? [];
+  sessions = s.rows ?? [];
+  timers = t.rows ?? [];
+}
+
+async function refresh() {
+  try {
+    await loadMembers();
+    await loadData();
+    error = "";
+  } catch (e) {
+    error = e.message;
+  }
+  ready = true;
+  render();
+}
+
+/** Run a write; on failure show the reason and re-read, so the screen never
+ *  keeps an optimistic change the hub refused. */
+async function attempt(fn) {
+  try {
+    error = "";
+    await fn();
+    return true;
+  } catch (e) {
+    try { await loadData(); } catch { /* keep what we have */ }
+    error = e.message || "Something went wrong.";
+    render();
+    return false;
+  }
+}
+
+// --- Side effects (best-effort, never block the write) ------------------------
+function notify(args) {
+  if (DEMO) return;
+  sendHubNotification({ url: hubAppUrl(APP_ID), ...args }).catch(() => {});
+}
+
+/**
+ * Announce verified sessions, and a weekly goal the moment it is reached.
+ * Only an adult reaches this (publish_acls require it), and the idempotency
+ * keys make re-verifying a session, or a second parent's tap, publish nothing.
+ * `before` is the session list as it stood before these were verified.
+ */
+function announceVerified(verifiedRows, before) {
+  let running = before;
+  for (const row of verifiedRows) {
+    const after = running.some(s => s.id === row.id)
+      ? running.map(s => (s.id === row.id ? row : s))
+      : [row, ...running];
+    events.publish("practice-log.session_verified", {
+      session_id: row.id, member_id: row.member_id, activity_id: row.activity_id,
+      minutes: Number(row.minutes) || 0, practice_date: row.practice_date,
+    }, row.member_id, { idempotencyKey: row.id })?.catch?.(() => {});
+
+    const activity = activityById(row.activity_id);
+    if (activity && crossedWeeklyGoal(activity, running, after, row.practice_date)) {
+      const week = weekStart(row.practice_date);
+      events.publish("practice-log.weekly_goal_met", {
+        member_id: row.member_id, activity_id: activity.id, week_start: week,
+        days_met: activityWeek(activity, after, row.practice_date).metDays,
+      }, row.member_id, { idempotencyKey: `${activity.id}:${week}` })?.catch?.(() => {});
+      if (row.member_id !== me()?.id) {
+        notify({ title: "Weekly goal met 🎉", body: `You reached your ${activity.name} goal for the week.`, audience: [row.member_id], idempotencyKey: `goal:${activity.id}:${week}` });
+      }
+    }
+    running = after;
+  }
+}
+
+// --- Writes ------------------------------------------------------------------
+async function saveSession({ activity, minutes, date, note, source, stopTimerFor }) {
+  const who = me();
+  if (!who || !canLogFor(who, activity.member_id)) return;
+  const stamp = nowIso();
+  // A session an adult records is one an adult has seen, so it is verified as
+  // it is written. A child's INSERT must not name the verified columns at all:
+  // they are adult-only, and the hub refuses the whole statement otherwise.
+  const verified = canVerify(who);
+  const row = {
+    id: crypto.randomUUID(), activity_id: activity.id, member_id: activity.member_id,
+    practice_date: date, minutes, source, note,
+    verified_by: verified ? who.id : "", verified_at: verified ? stamp : "", created_at: stamp,
+  };
+  const insert = verified
+    ? { sql: "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        params: [row.id, row.activity_id, row.member_id, row.practice_date, row.minutes, row.source, row.note, row.verified_by, row.verified_at, row.created_at] }
+    : { sql: "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        params: [row.id, row.activity_id, row.member_id, row.practice_date, row.minutes, row.source, row.note, row.created_at] };
+  const statements = [insert];
+  if (stopTimerFor) statements.push({ sql: "DELETE FROM app_practice_log__timers WHERE member_id = ?", params: [stopTimerFor] });
+
+  const before = sessions;
+  const ok = await attempt(async () => {
+    await db.batch(statements);
+    sessions = [row, ...sessions].sort((a, b) => b.practice_date.localeCompare(a.practice_date) || String(b.created_at).localeCompare(String(a.created_at)));
+    if (stopTimerFor) timers = timers.filter(t => t.member_id !== stopTimerFor);
+    closeModal();
+    render();
+  });
+  if (!ok) return;
+  if (verified) {
+    announceVerified([row], before);
+  } else {
+    const ids = adults().map(m => m.id);
+    if (ids.length) notify({ title: "Practice to verify", body: `${memberName(row.member_id)} logged ${formatMinutes(minutes)} of ${activity.name}.`, audience: ids });
+  }
+}
+
+async function startTimer(activityId) {
+  const who = me();
+  const activity = activityById(activityId);
+  if (!who || !activity || activity.member_id !== who.id) return;
+  const row = { member_id: who.id, activity_id: activity.id, started_at: nowIso() };
+  await attempt(async () => {
+    // One timer per member: starting another replaces it.
+    await db.batch([
+      { sql: "DELETE FROM app_practice_log__timers WHERE member_id = ?", params: [who.id] },
+      { sql: "INSERT INTO app_practice_log__timers (member_id, activity_id, started_at) VALUES (?, ?, ?)", params: [row.member_id, row.activity_id, row.started_at] },
+    ]);
+    timers = [...timers.filter(t => t.member_id !== who.id), row];
+    render();
+  });
+}
+
+async function stopTimer(memberId) {
+  const timer = timers.find(t => t.member_id === memberId);
+  const activity = timer && activityById(timer.activity_id);
+  if (!timer || !activity) return cancelTimer(memberId, true);
+  await saveSession({
+    activity, minutes: timerMinutes(timer.started_at, Date.now()),
+    date: today(), note: "", source: "timer", stopTimerFor: memberId,
+  });
+}
+
+async function cancelTimer(memberId, silent = false) {
+  if (!silent) {
+    const ok = await hubConfirm({ message: "Stop the timer without saving?", confirmLabel: "Discard", destructive: true });
+    if (!ok) return;
+  }
+  await attempt(async () => {
+    await db("DELETE FROM app_practice_log__timers WHERE member_id = ?", [memberId]);
+    timers = timers.filter(t => t.member_id !== memberId);
+    render();
+  });
+}
+
+async function verifySessions(ids) {
+  const who = me();
+  if (!canVerify(who)) return;
+  const stamp = nowIso();
+  const targets = sessions.filter(s => ids.includes(s.id) && !isVerified(s));
+  if (!targets.length) return;
+  const before = sessions;
+  const ok = await attempt(async () => {
+    // `AND verified_at = ''` keeps the first parent's stamp if two tap at once.
+    await db.batch(targets.map(s => ({
+      sql: "UPDATE app_practice_log__sessions SET verified_by = ?, verified_at = ? WHERE id = ? AND verified_at = ''",
+      params: [who.id, stamp, s.id],
+    })));
+    const done = new Set(targets.map(s => s.id));
+    sessions = sessions.map(s => (done.has(s.id) ? { ...s, verified_by: who.id, verified_at: stamp } : s));
+    render();
+  });
+  if (!ok) return;
+  const verifiedRows = targets.map(s => ({ ...s, verified_by: who.id, verified_at: stamp }));
+  announceVerified(verifiedRows, before);
+  const byMember = new Map();
+  for (const s of verifiedRows) byMember.set(s.member_id, (byMember.get(s.member_id) ?? 0) + (Number(s.minutes) || 0));
+  for (const [memberId, minutes] of byMember) {
+    if (memberId !== who.id) notify({ title: "Practice verified ✅", body: `${formatMinutes(minutes)} of practice now counts toward your goal.`, audience: [memberId] });
+  }
+}
+
+async function updateSession(id, form) {
+  if (!canEditSession(me())) return;
+  const minutes = clampMinutes(field(form, "minutes").value);
+  const date = field(form, "date").value;
+  if (!minutes) { field(form, "minutes").focus(); return; }
+  if (!isDate(date) || date > today()) { field(form, "date").focus(); return; }
+  const note = field(form, "note").value.trim();
+  await attempt(async () => {
+    await db("UPDATE app_practice_log__sessions SET minutes = ?, practice_date = ?, note = ? WHERE id = ?", [minutes, date, note, id]);
+    sessions = sessions.map(s => (s.id === id ? { ...s, minutes, practice_date: date, note } : s));
+    closeModal();
+    render();
+  });
+}
+
+async function deleteSession(id) {
+  if (!canEditSession(me())) return;
+  const ok = await hubConfirm({ message: "Remove this practice session?", confirmLabel: "Remove", destructive: true });
+  if (!ok) return;
+  await attempt(async () => {
+    await db("DELETE FROM app_practice_log__sessions WHERE id = ?", [id]);
+    sessions = sessions.filter(s => s.id !== id);
+    closeModal();
+    render();
+  });
+}
+
+async function saveActivity(form) {
+  const who = me();
+  if (!canManageActivities(who)) return;
+  const id = form.dataset.id || "";
+  const name = field(form, "name").value.trim();
+  if (!name) { field(form, "name").focus(); return; }
+  const icon = form.querySelector(".icon-choice.on")?.dataset.icon ?? DEFAULT_ICON;
+  const targetMinutes = Math.min(MAX_MINUTES, Math.max(1, Math.round(Number(field(form, "target_minutes").value)) || 20));
+  const targetDays = Math.min(7, Math.max(1, Math.round(Number(field(form, "target_days").value)) || 5));
+  const button = form.querySelector("button[type=submit]");
+  if (button) { button.disabled = true; button.textContent = "Saving…"; }
+  const ok = await attempt(async () => {
+    if (id) {
+      await db("UPDATE app_practice_log__activities SET name = ?, icon = ?, target_minutes = ?, target_days = ? WHERE id = ?", [name, icon, targetMinutes, targetDays, id]);
+      activities = activities.map(a => (a.id === id ? { ...a, name, icon, target_minutes: targetMinutes, target_days: targetDays } : a));
+    } else {
+      const row = {
+        id: crypto.randomUUID(), member_id: field(form, "member_id").value, name, icon,
+        target_minutes: targetMinutes, target_days: targetDays, archived_at: "", created_by: who.id, created_at: nowIso(),
+      };
+      await db(
+        "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, archived_at, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [row.id, row.member_id, row.name, row.icon, row.target_minutes, row.target_days, row.archived_at, row.created_by, row.created_at]
+      );
+      activities = [...activities, row];
+    }
+    closeModal();
+    render();
+  });
+  if (!ok && button) { button.disabled = false; button.textContent = "Save"; }
+}
+
+async function setArchived(id, on) {
+  if (!canManageActivities(me())) return;
+  const stamp = on ? nowIso() : "";
+  await attempt(async () => {
+    await db("UPDATE app_practice_log__activities SET archived_at = ? WHERE id = ?", [stamp, id]);
+    if (on) {
+      const row = activities.find(a => a.id === id);
+      activities = activities.filter(a => a.id !== id);
+      timers = timers.filter(t => t.activity_id !== id);
+      // With no hub to re-read from, the demo keeps the archived list itself.
+      if (row && (archived || DEMO)) archived = [{ ...row, archived_at: stamp }, ...(archived ?? [])];
+    } else {
+      const row = archived?.find(a => a.id === id);
+      archived = archived?.filter(a => a.id !== id) ?? null;
+      if (row) activities = [...activities, { ...row, archived_at: "" }];
+    }
+    closeModal();
+    render();
+  });
+}
+
+async function deleteActivity(id) {
+  if (!canManageActivities(me())) return;
+  const activity = activityById(id);
+  const ok = await hubConfirm({
+    message: `Delete ${activity?.name ?? "this activity"}?`,
+    description: "Every session logged for it is deleted too. Archive it instead to keep the history.",
+    confirmLabel: "Delete", destructive: true,
+  });
+  if (!ok) return;
+  await attempt(async () => {
+    // The manifest's delete_cascades removes its sessions and any running timer.
+    await db("DELETE FROM app_practice_log__activities WHERE id = ?", [id]);
+    activities = activities.filter(a => a.id !== id);
+    archived = archived?.filter(a => a.id !== id) ?? null;
+    sessions = sessions.filter(s => s.activity_id !== id);
+    timers = timers.filter(t => t.activity_id !== id);
+    closeModal();
+    render();
+  });
+}
+
+async function showArchived() {
+  if (DEMO) { archived = archived ?? []; render(); return; }
+  await attempt(async () => {
+    const { rows } = await db("SELECT * FROM app_practice_log__activities WHERE archived_at <> '' ORDER BY archived_at DESC LIMIT 100");
+    archived = rows ?? [];
+    render();
+  });
+}
+
+// --- Rendering ---------------------------------------------------------------
+function scopeMemberId() {
+  const who = me();
+  if (!who) return null;
+  return isAdult(who) ? viewMember : who.id;
+}
+
+function renderDemoBar() {
+  if (CONTEXT) return "";
+  return `<div class="demo-bar"><strong>Demo — preview as:</strong>${members.map(m =>
+    `<button type="button" class="${me()?.id === m.id ? "on" : ""}" data-action="demo-me" data-id="${esc(m.id)}">${esc(m.name)} (${esc(m.role)})</button>`).join("")}</div>`;
+}
+
+function renderTimers() {
+  const who = me();
+  if (!who) return "";
+  const visible = timers.filter(t => t.member_id === who.id || isAdult(who));
+  return visible.map(t => {
+    const activity = activityById(t.activity_id);
+    const mine = t.member_id === who.id;
+    const label = activity ? `${esc(activity.icon)} ${esc(activity.name)}` : "Practice";
+    return `<div class="card timer ${mine ? "" : "timer-other"}" style="margin-bottom:10px">
+      <div class="timer-main">
+        <div class="tiny muted"><span class="pulse"></span>${mine ? "Practising" : `${esc(memberName(t.member_id))} is practising`} ${label}</div>
+        <div class="timer-clock" data-clock="${esc(t.started_at)}">${formatClock(elapsedMs(t.started_at, Date.now()))}</div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" data-action="timer-stop" data-id="${esc(t.member_id)}">Stop &amp; save</button>
+        <button type="button" class="btn-link" data-action="timer-cancel" data-id="${esc(t.member_id)}">Discard</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function sessionLine(s) {
+  const activity = activityById(s.activity_id);
+  return { icon: activity?.icon ?? DEFAULT_ICON, name: activity?.name ?? "Practice" };
+}
+
+function renderPending() {
+  const who = me();
+  if (!canVerify(who)) return "";
+  const pending = pendingSessions(sessions);
+  if (!pending.length) return "";
+  const t = today();
+  return `<h2>To verify</h2>
+    <div class="card">
+      ${pending.map(s => {
+        const { icon, name } = sessionLine(s);
+        return `<div class="row">
+          <div class="row-icon">${esc(icon)}</div>
+          <div class="row-body">
+            <div class="row-title">${esc(memberName(s.member_id))} · ${esc(name)} · ${formatMinutes(s.minutes)}</div>
+            <div class="tiny muted">${esc(dayLabel(s.practice_date, t))} · ${s.source === "timer" ? "timed" : "typed in"}</div>
+            ${s.note ? `<div class="tiny muted row-note">${esc(s.note)}</div>` : ""}
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-sm" data-action="verify" data-id="${esc(s.id)}">Verify</button>
+            <button type="button" class="btn-link" data-action="session-edit" data-id="${esc(s.id)}">Edit</button>
+          </div>
+        </div>`;
+      }).join("")}
+      ${pending.length > 1 ? `<div class="row"><div class="row-body tiny muted">${pending.length} sessions waiting</div><button type="button" class="btn btn-ghost btn-sm" data-action="verify-all">Verify all</button></div>` : ""}
+    </div>`;
+}
+
+function renderTabs() {
+  const who = me();
+  if (!isAdult(who)) return "";
+  const withActivities = membersWithActivities(members, activities);
+  if (withActivities.length < 2) return "";
+  const tabs = [{ id: "", label: "Everyone" }, ...withActivities.map(m => ({ id: m.id, label: m.name }))];
+  return `<div class="tabs">${tabs.map(t =>
+    `<button type="button" class="tab ${(viewMember ?? "") === t.id ? "on" : ""}" data-action="view" data-id="${esc(t.id)}">${esc(t.label)}</button>`).join("")}</div>`;
+}
+
+function renderActivity(activity, showOwner) {
+  const who = me();
+  const t = today();
+  const week = activityWeek(activity, sessions, t);
+  const mine = activity.member_id === who?.id;
+  const running = timers.some(x => x.member_id === who?.id);
+  const dayTitle = (d) => {
+    const what = d.state === "met" ? "goal met" : d.state === "waiting" ? "waiting for a parent" : d.state === "partial" ? `${Number(d.logged)} of ${week.target} min` : "no practice";
+    return `${dayLabel(d.date, t)}: ${what}`;
+  };
+  return `<article class="card">
+    <div class="act-head">
+      <div class="act-icon">${esc(activity.icon || DEFAULT_ICON)}</div>
+      <div class="act-body">
+        <div class="act-name">${esc(activity.name)}${showOwner ? ` <span class="muted tiny">· ${esc(memberName(activity.member_id))}</span>` : ""}</div>
+        <div class="tiny muted">${formatMinutes(week.target)} a day, ${week.targetDays} ${week.targetDays === 1 ? "day" : "days"} a week</div>
+      </div>
+      ${canManageActivities(who) ? `<button type="button" class="btn-link" data-action="activity-edit" data-id="${esc(activity.id)}">Edit</button>` : ""}
+    </div>
+    <div class="week" role="list" aria-label="This week">
+      ${week.days.map(d => `<div class="day ${d.state} ${d.isToday ? "today" : ""} ${d.isFuture ? "future" : ""}" role="listitem" title="${esc(dayTitle(d))}" aria-label="${esc(dayTitle(d))}">
+        <div class="day-dot">${d.state === "met" ? "✓" : d.state === "waiting" ? "…" : d.logged ? Number(d.logged) : ""}</div>
+        <div class="day-letter">${dayLetter(d.index)}</div>
+      </div>`).join("")}
+    </div>
+    <div class="act-foot">
+      <div class="tiny ${week.goalMet ? "goal-met" : "muted"}">
+        ${week.goalMet ? "Weekly goal met 🎉" : `${week.metDays} of ${week.targetDays} days`}
+        · ${formatMinutes(week.verifiedMinutes)} verified${week.loggedMinutes > week.verifiedMinutes ? `, ${formatMinutes(week.loggedMinutes - week.verifiedMinutes)} waiting` : ""}
+      </div>
+      <div class="actions">
+        ${mine && !running ? `<button type="button" class="btn" data-action="timer-start" data-id="${esc(activity.id)}">▶ Start</button>` : ""}
+        ${canLogFor(who, activity.member_id) ? `<button type="button" class="btn btn-ghost" data-action="log" data-id="${esc(activity.id)}">+ Log minutes</button>` : ""}
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderActivities() {
+  const who = me();
+  const scope = scopeMemberId();
+  const list = scope ? activities.filter(a => a.member_id === scope) : activities;
+  if (!list.length) {
+    return `<div class="card empty">
+      <div class="empty-icon">🎵</div>
+      ${canManageActivities(who)
+        ? `<div>Nothing to practise yet. Add an activity and set a goal for it.</div>`
+        : `<div>Nothing to practise yet. Ask a parent to add what you practise.</div>`}
+    </div>`;
+  }
+  return `<div class="stack">${list.map(a => renderActivity(a, !scope)).join("")}</div>`;
+}
+
+function historyRows() {
+  const scope = scopeMemberId();
+  const list = scope ? sessions.filter(s => s.member_id === scope) : sessions;
+  return searchQ ? list.filter(s => searchMatch(searchQ, searchableFields(s, sessionLine(s).name))) : list;
+}
+
+function renderHistoryList() {
+  const who = me();
+  const rows = historyRows();
+  if (!rows.length) return `<div class="empty">${searchQ ? `No sessions match "${esc(searchQ)}".` : "No practice logged in the last few weeks."}</div>`;
+  const t = today();
+  const scope = scopeMemberId();
+  return rows.slice(0, 60).map(s => {
+    const { icon, name } = sessionLine(s);
+    return `<div class="row">
+      <div class="row-icon">${esc(icon)}</div>
+      <div class="row-body">
+        <div class="row-title">${esc(name)} · ${formatMinutes(s.minutes)}</div>
+        <div class="tiny muted">${scope ? "" : `${esc(memberName(s.member_id))} · `}${esc(dayLabel(s.practice_date, t))}</div>
+        ${s.note ? `<div class="tiny muted row-note">${esc(s.note)}</div>` : ""}
+      </div>
+      <span class="badge ${isVerified(s) ? "ok" : "wait"}">${isVerified(s) ? "✓ Verified" : "Waiting"}</span>
+      ${canEditSession(who) ? `<button type="button" class="btn-link" data-action="session-edit" data-id="${esc(s.id)}">Edit</button>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function renderHistory() {
+  const scope = scopeMemberId();
+  const total = (scope ? sessions.filter(s => s.member_id === scope) : sessions).length;
+  if (!total) return "";
+  return `<h2>Recent practice</h2>
+    ${total > 8 ? `<div class="search-row"><input id="search" class="search-input" type="search" placeholder="Search sessions…" aria-label="Search sessions" value="${esc(searchQ)}" /></div>` : ""}
+    <div class="card" id="history">${renderHistoryList()}</div>`;
+}
+
+function renderArchived() {
+  if (!canManageActivities(me())) return "";
+  if (archived === null) return `<p style="margin-top:18px"><button type="button" class="btn-link" data-action="archived-show">Show archived activities</button></p>`;
+  if (!archived.length) return `<p class="tiny muted" style="margin-top:18px">No archived activities.</p>`;
+  return `<h2>Archived</h2><div class="card">${archived.map(a => `<div class="row">
+      <div class="row-icon">${esc(a.icon || DEFAULT_ICON)}</div>
+      <div class="row-body"><div class="row-title">${esc(a.name)}</div><div class="tiny muted">${esc(memberName(a.member_id))}</div></div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="activity-restore" data-id="${esc(a.id)}">Restore</button>
+        <button type="button" class="btn-link" data-action="activity-delete" data-id="${esc(a.id)}">Delete</button>
+      </div>
+    </div>`).join("")}</div>`;
+}
+
+function render() {
+  const root = document.getElementById("root");
+  if (!ready) return;
+  const who = me();
+  root.innerHTML = `
+    <div class="topbar">
+      <h1>🎹 Practice</h1>
+      ${canManageActivities(who) ? `<button type="button" class="btn" data-action="activity-new">+ Activity</button>` : ""}
+    </div>
+    ${renderDemoBar()}
+    ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ""}
+    ${renderTimers()}
+    ${renderPending()}
+    ${renderTabs()}
+    ${renderActivities()}
+    ${renderHistory()}
+    ${renderArchived()}
+  `;
+}
+
+// Only the clocks change each second; re-rendering the page would steal focus
+// from whatever the user is typing in.
+setInterval(() => {
+  const now = Date.now();
+  for (const el of document.querySelectorAll("[data-clock]")) {
+    el.textContent = formatClock(elapsedMs(el.getAttribute("data-clock"), now));
+  }
+}, 1000);
+
+// --- Modals ------------------------------------------------------------------
+function openModal(html) {
+  closeModal();
+  modalEl = document.createElement("div");
+  modalEl.className = "modal-backdrop";
+  modalEl.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  modalEl.addEventListener("click", (e) => { if (e.target === modalEl) closeModal(); });
+  document.body.appendChild(modalEl);
+  requestAnimationFrame(() => modalEl?.querySelector("[data-autofocus]")?.focus());
+}
+function closeModal() { modalEl?.remove(); modalEl = null; }
+
+function openActivityModal(id) {
+  const who = me();
+  if (!canManageActivities(who)) return;
+  const existing = id ? activityById(id) : null;
+  const icon = existing?.icon ?? ICON_CHOICES[0];
+  const forId = existing?.member_id ?? viewMember ?? members.find(m => !isAdult(m))?.id ?? who.id;
+  openModal(`
+    <form id="activity-form" data-id="${esc(existing?.id ?? "")}">
+      <div class="modal-title">${existing ? "Edit activity" : "New activity"}</div>
+      ${existing ? "" : `<div class="field">
+        <label for="f-member">Who practises</label>
+        <select id="f-member" name="member_id">${members.map(m => `<option value="${esc(m.id)}" ${m.id === forId ? "selected" : ""}>${esc(m.name)}</option>`).join("")}</select>
+      </div>`}
+      <div class="field">
+        <label for="f-name">What</label>
+        <input type="text" id="f-name" name="name" maxlength="60" placeholder="Piano, Spanish, free throws…" value="${esc(existing?.name ?? "")}" data-autofocus required />
+      </div>
+      <div class="field">
+        <span class="label">Icon</span>
+        <div class="icons">${ICON_CHOICES.map(i => `<button type="button" class="icon-choice ${i === icon ? "on" : ""}" data-action="icon" data-icon="${i}" aria-label="Icon ${i}">${i}</button>`).join("")}</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-minutes">Minutes a day</label>
+          <input type="number" id="f-minutes" name="target_minutes" min="1" max="${MAX_MINUTES}" inputmode="numeric" value="${Number(existing?.target_minutes) || 20}" required />
+        </div>
+        <div class="field">
+          <label for="f-days">Days a week</label>
+          <input type="number" id="f-days" name="target_days" min="1" max="7" inputmode="numeric" value="${Number(existing?.target_days) || 5}" required />
+        </div>
+      </div>
+      <div class="modal-actions">
+        ${existing ? `<button type="button" class="btn btn-danger btn-sm" data-action="activity-delete" data-id="${esc(existing.id)}">Delete</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="activity-archive" data-id="${esc(existing.id)}">Archive</button>
+          <span class="spacer"></span>` : ""}
+        <button type="button" class="btn btn-ghost" data-action="modal-close">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>`);
+}
+
+function openLogModal(activityId) {
+  const activity = activityById(activityId);
+  if (!activity || !canLogFor(me(), activity.member_id)) return;
+  const t = today();
+  openModal(`
+    <form id="log-form" data-id="${esc(activity.id)}">
+      <div class="modal-title">${esc(activity.icon || DEFAULT_ICON)} Log ${esc(activity.name)}</div>
+      <div class="field">
+        <label for="f-log-minutes">Minutes</label>
+        <input type="number" id="f-log-minutes" name="minutes" min="1" max="${MAX_MINUTES}" inputmode="numeric" value="${Number(activity.target_minutes) || 20}" data-autofocus required />
+        <div class="quick">${[10, 15, 20, 30, 45, 60].map(n => `<button type="button" data-action="quick-minutes" data-minutes="${n}">${n}</button>`).join("")}</div>
+      </div>
+      <div class="field">
+        <label for="f-log-date">Day</label>
+        <input type="date" id="f-log-date" name="date" value="${t}" min="${addDays(t, -30)}" max="${t}" required />
+      </div>
+      <div class="field">
+        <label for="f-log-note">Note (optional)</label>
+        <textarea id="f-log-note" name="note" maxlength="300" placeholder="What did you work on?"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-action="modal-close">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>`);
+}
+
+function openSessionModal(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s || !canEditSession(me())) return;
+  const { icon, name } = sessionLine(s);
+  const t = today();
+  openModal(`
+    <form id="session-form" data-id="${esc(s.id)}">
+      <div class="modal-title">${esc(icon)} ${esc(memberName(s.member_id))} · ${esc(name)}</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-s-minutes">Minutes</label>
+          <input type="number" id="f-s-minutes" name="minutes" min="1" max="${MAX_MINUTES}" inputmode="numeric" value="${Number(s.minutes) || 1}" required />
+        </div>
+        <div class="field">
+          <label for="f-s-date">Day</label>
+          <input type="date" id="f-s-date" name="date" value="${esc(s.practice_date)}" max="${t}" required />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-s-note">Note</label>
+        <textarea id="f-s-note" name="note" maxlength="300">${esc(s.note ?? "")}</textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger btn-sm" data-action="session-delete" data-id="${esc(s.id)}">Remove</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-ghost" data-action="modal-close">Cancel</button>
+        <button type="submit" class="btn">Save</button>
+      </div>
+    </form>`);
+}
+
+// --- Events ------------------------------------------------------------------
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-action]");
+  if (!target) return;
+  const id = target.getAttribute("data-id") ?? "";
+  switch (target.getAttribute("data-action")) {
+    case "demo-me": demoMe = memberMap.get(id) ?? null; viewMember = null; searchQ = ""; archived = null; render(); break;
+    case "view": viewMember = id || null; searchQ = ""; render(); break;
+    case "timer-start": startTimer(id); break;
+    case "timer-stop": target.disabled = true; stopTimer(id); break;
+    case "timer-cancel": cancelTimer(id); break;
+    case "log": openLogModal(id); break;
+    case "verify": target.disabled = true; verifySessions([id]); break;
+    case "verify-all": target.disabled = true; verifySessions(pendingSessions(sessions).map(s => s.id)); break;
+    case "session-edit": openSessionModal(id); break;
+    case "session-delete": deleteSession(id); break;
+    case "activity-new": openActivityModal(""); break;
+    case "activity-edit": openActivityModal(id); break;
+    case "activity-archive": setArchived(id, true); break;
+    case "activity-restore": setArchived(id, false); break;
+    case "activity-delete": deleteActivity(id); break;
+    case "archived-show": showArchived(); break;
+    case "modal-close": closeModal(); break;
+    case "icon":
+      for (const el of modalEl?.querySelectorAll(".icon-choice") ?? []) el.classList.toggle("on", el === target);
+      break;
+    case "quick-minutes": {
+      const input = modalEl?.querySelector("[name=minutes]");
+      if (input) input.value = target.getAttribute("data-minutes");
+      break;
+    }
+  }
+});
+
+document.addEventListener("submit", (event) => {
+  const form = event.target;
+  event.preventDefault();
+  if (form.id === "activity-form") { saveActivity(form); return; }
+  if (form.id === "session-form") { updateSession(form.dataset.id, form); return; }
+  if (form.id === "log-form") {
+    const activity = activityById(form.dataset.id);
+    const minutes = clampMinutes(field(form, "minutes").value);
+    const date = field(form, "date").value;
+    if (!activity) return;
+    if (!minutes) { field(form, "minutes").focus(); return; }
+    if (!isDate(date) || date > today()) { field(form, "date").focus(); return; }
+    const button = form.querySelector("button[type=submit]");
+    if (button) { button.disabled = true; button.textContent = "Saving…"; }
+    saveSession({ activity, minutes, date, note: field(form, "note").value.trim(), source: "manual" });
+  }
+});
+
+// Re-render only the list on each keystroke so the search box keeps focus.
+document.addEventListener("input", (event) => {
+  if (event.target.id !== "search") return;
+  searchQ = event.target.value;
+  const list = document.getElementById("history");
+  if (list) list.innerHTML = renderHistoryList();
+});
+
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeModal(); });
+
+// A timer started on another device shows up when this one comes back.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && ready && !modalEl && !DEMO) refresh();
+});
+
+refresh();
+</script>
+</body>
+</html>
