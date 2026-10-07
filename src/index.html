@@ -109,7 +109,7 @@
     .badge.ok { background: var(--green-soft); color: var(--green); }
     .badge.wait { background: var(--amber-soft); color: var(--amber); }
     .empty { color: var(--muted); text-align: center; padding: 30px 16px; }
-    .empty-icon { font-size: 2.6rem; margin-bottom: 8px; }
+    .empty-icon { margin-bottom: 8px; }
 
     .search-row { margin-bottom: 10px; }
     .search-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit; background: var(--surface); color: var(--text); }
@@ -145,6 +145,7 @@
 import {
   esc, isAdult, hubConfirm, hubToday, searchMatch,
   createDbHelper, createEventsHelper, sendHubNotification, hubAppUrl,
+  glyph, chickadee,
 } from "/hub-sdk.js";
 import {
   ICON_CHOICES, DEFAULT_ICON, MAX_MINUTES,
@@ -654,13 +655,13 @@ function renderActivity(activity, showOwner) {
     </div>
     <div class="week" role="list" aria-label="This week">
       ${week.days.map(d => `<div class="day ${d.state} ${d.isToday ? "today" : ""} ${d.isFuture ? "future" : ""}" role="listitem" title="${esc(dayTitle(d))}" aria-label="${esc(dayTitle(d))}">
-        <div class="day-dot">${d.state === "met" ? "✓" : d.state === "waiting" ? "…" : d.logged ? Number(d.logged) : ""}</div>
+        <div class="day-dot">${d.state === "met" ? glyph("tick", { accent: "currentColor" }) : d.state === "waiting" ? "…" : d.logged ? Number(d.logged) : ""}</div>
         <div class="day-letter">${dayLetter(d.index)}</div>
       </div>`).join("")}
     </div>
     <div class="act-foot">
       <div class="tiny ${week.goalMet ? "goal-met" : "muted"}">
-        ${week.goalMet ? "Weekly goal met 🎉" : `${week.metDays} of ${week.targetDays} days`}
+        ${week.goalMet ? `Weekly goal met ${glyph("sparkles")}` : `${week.metDays} of ${week.targetDays} days`}
         · ${formatMinutes(week.verifiedMinutes)} verified${week.loggedMinutes > week.verifiedMinutes ? `, ${formatMinutes(week.loggedMinutes - week.verifiedMinutes)} waiting` : ""}
       </div>
       <div class="actions">
@@ -677,7 +678,7 @@ function renderActivities() {
   const list = scope ? activities.filter(a => a.member_id === scope) : activities;
   if (!list.length) {
     return `<div class="card empty">
-      <div class="empty-icon">🎵</div>
+      <div class="empty-icon">${chickadee("nest", { size: 72 })}</div>
       ${canManageActivities(who)
         ? `<div>Nothing to practise yet. Add an activity and set a goal for it.</div>`
         : `<div>Nothing to practise yet. Ask a parent to add what you practise.</div>`}
@@ -707,7 +708,7 @@ function renderHistoryList() {
         <div class="tiny muted">${scope ? "" : `${esc(memberName(s.member_id))} · `}${esc(dayLabel(s.practice_date, t))}</div>
         ${s.note ? `<div class="tiny muted row-note">${esc(s.note)}</div>` : ""}
       </div>
-      <span class="badge ${isVerified(s) ? "ok" : "wait"}">${isVerified(s) ? "✓ Verified" : "Waiting"}</span>
+      <span class="badge ${isVerified(s) ? "ok" : "wait"}">${isVerified(s) ? `${glyph("tick", { accent: "currentColor" })} Verified` : "Waiting"}</span>
       ${canEditSession(who) ? `<button type="button" class="btn-link" data-action="session-edit" data-id="${esc(s.id)}">Edit</button>` : ""}
     </div>`;
   }).join("");
@@ -742,7 +743,7 @@ function render() {
   const who = me();
   root.innerHTML = `
     <div class="topbar">
-      <h1>🎹 Practice</h1>
+      <h1>${glyph("metronome")} Practice</h1>
       ${canManageActivities(who) ? `<button type="button" class="btn" data-action="activity-new">+ Activity</button>` : ""}
     </div>
     ${renderDemoBar()}
