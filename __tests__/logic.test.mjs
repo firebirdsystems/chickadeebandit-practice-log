@@ -3,7 +3,7 @@ import {
   isDate, addDays, weekStart, weekDates, dayLabel, dayLetter,
   clampMinutes, formatMinutes, elapsedMs, timerMinutes, formatClock, MAX_MINUTES,
   canManageActivities, canVerify, canLogFor, canEditSession, isVerified,
-  activityWeek, crossedWeeklyGoal, pendingSessions, membersWithActivities, minutesOn,
+  activityWeek, crossedWeeklyGoal, pendingSessions, membersWithActivities, minutesOn, latestPracticeDate,
   searchableFields,
 } from "../src/logic.js";
 
@@ -211,6 +211,18 @@ describe("lists", () => {
       { member_id: "k1", practice_date: "2026-10-05", minutes: 99 },
     ];
     expect(minutesOn(rows, "k1", "2026-10-06")).toBe(35);
+  });
+
+  it("finds the latest day an activity was practised", () => {
+    const rows = [
+      { activity_id: "a1", practice_date: "2026-10-04" },
+      { activity_id: "a1", practice_date: "2026-10-06" },
+      { activity_id: "a1", practice_date: "2026-10-05" },
+      { activity_id: "a2", practice_date: "2026-10-09" },
+    ];
+    expect(latestPracticeDate(rows, "a1")).toBe("2026-10-06");
+    expect(latestPracticeDate(rows, "a3")).toBe("");
+    expect(latestPracticeDate([], "a1")).toBe("");
   });
 
   it("is findable by activity name and by note, not just the date", () => {

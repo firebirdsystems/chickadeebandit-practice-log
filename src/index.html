@@ -151,7 +151,7 @@ import {
   addDays, isDate, weekStart, dayLetter, dayLabel,
   clampMinutes, formatMinutes, elapsedMs, timerMinutes, formatClock,
   canManageActivities, canVerify, canLogFor, canEditSession, isVerified,
-  activityWeek, crossedWeeklyGoal, pendingSessions, membersWithActivities,
+  activityWeek, crossedWeeklyGoal, pendingSessions, membersWithActivities, latestPracticeDate,
   searchableFields,
 } from "./logic.js";
 
@@ -333,8 +333,12 @@ async function saveSession({ activity, minutes, date, note, source, stopTimerFor
         params: [row.id, row.activity_id, row.member_id, row.practice_date, row.minutes, row.source, row.note, row.verified_by, row.verified_at, row.created_at] }
     : { sql: "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         params: [row.id, row.activity_id, row.member_id, row.practice_date, row.minutes, row.source, row.note, row.created_at] };
-  const statements = [insert];
+  // The session INSERT goes last: the hub appends a write effect to it (the
+  // activity's last_practice_date), and in a batch the statement that triggers
+  // an effect must be the final one.
+  const statements = [];
   if (stopTimerFor) statements.push({ sql: "DELETE FROM app_practice_log__timers WHERE member_id = ?", params: [stopTimerFor] });
+  statements.push(insert);
 
   const before = sessions;
   const ok = await attempt(async () => {
@@ -426,8 +430,22 @@ async function updateSession(id, form) {
   if (!isDate(date) || date > today()) { field(form, "date").focus(); return; }
   const note = field(form, "note").value.trim();
   await attempt(async () => {
-    await db("UPDATE app_practice_log__sessions SET minutes = ?, practice_date = ?, note = ? WHERE id = ?", [minutes, date, note, id]);
-    sessions = sessions.map(s => (s.id === id ? { ...s, minutes, practice_date: date, note } : s));
+    const before = sessions.find(s => s.id === id);
+    const next = sessions.map(s => (s.id === id ? { ...s, minutes, practice_date: date, note } : s));
+    const statements = [{ sql: "UPDATE app_practice_log__sessions SET minutes = ?, practice_date = ?, note = ? WHERE id = ?", params: [minutes, date, note, id] }];
+    // The hub recomputes an activity's last_practice_date when a session is
+    // inserted, not when one is edited or removed. Moving a session to another
+    // day is an adult's edit, and an adult may write the activity, so set it
+    // here from the sessions on screen. The stored value only matters for
+    // "practised today", and today is always on screen.
+    if (before && before.practice_date !== date) {
+      statements.push({
+        sql: "UPDATE app_practice_log__activities SET last_practice_date = ? WHERE id = ?",
+        params: [latestPracticeDate(next, before.activity_id), before.activity_id],
+      });
+    }
+    await db.batch(statements);
+    sessions = next;
     closeModal();
     render();
   });
@@ -438,8 +456,19 @@ async function deleteSession(id) {
   const ok = await hubConfirm({ message: "Remove this practice session?", confirmLabel: "Remove", destructive: true });
   if (!ok) return;
   await attempt(async () => {
-    await db("DELETE FROM app_practice_log__sessions WHERE id = ?", [id]);
-    sessions = sessions.filter(s => s.id !== id);
+    const removed = sessions.find(s => s.id === id);
+    const next = sessions.filter(s => s.id !== id);
+    const statements = [{ sql: "DELETE FROM app_practice_log__sessions WHERE id = ?", params: [id] }];
+    // As with an edit: the hub stamps last_practice_date on insert only, so the
+    // adult removing a session puts the stamp back to what remains.
+    if (removed) {
+      statements.push({
+        sql: "UPDATE app_practice_log__activities SET last_practice_date = ? WHERE id = ?",
+        params: [latestPracticeDate(next, removed.activity_id), removed.activity_id],
+      });
+    }
+    await db.batch(statements);
+    sessions = next;
     closeModal();
     render();
   });

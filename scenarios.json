@@ -2,51 +2,88 @@
   "scenarios": [
     {
       "name": "a child logs their own practice but cannot verify or change it; a parent verifies it",
-      "members": { "parent": "adult", "kidA": "child", "kidB": "child" },
+      "members": {
+        "parent": "adult",
+        "kidA": "child",
+        "kidB": "child"
+      },
       "steps": [
         {
           "action": "seedRaw",
           "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, archived_at, created_by, created_at) VALUES ('act_a', ?, 'Piano', '🎹', 20, 5, '', ?, '2026-01-01T00:00:00Z')",
-          "params": ["{{kidA}}", "{{parent}}"]
+          "params": [
+            "{{kidA}}",
+            "{{parent}}"
+          ]
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["s1", "act_a", "{{kidA}}", "2026-01-05", 30, "timer", "", "2026-01-05T17:00:00Z"],
-          "expect": { "status": 200 }
+          "params": [
+            "s1",
+            "act_a",
+            "{{kidA}}",
+            "2026-01-05",
+            30,
+            "timer",
+            "",
+            "2026-01-05T17:00:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "UPDATE app_practice_log__sessions SET verified_by = ?, verified_at = ? WHERE id = ?",
-          "params": ["{{kidA}}", "2026-01-05T17:01:00Z", "s1"],
-          "expect": { "status": 403 }
+          "params": [
+            "{{kidA}}",
+            "2026-01-05T17:01:00Z",
+            "s1"
+          ],
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "UPDATE app_practice_log__sessions SET minutes = 300 WHERE id = 's1'",
-          "expect": { "status": 403 }
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "DELETE FROM app_practice_log__sessions WHERE id = 's1'",
-          "expect": { "status": 403 }
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "db",
           "as": "kidB",
           "sql": "SELECT id FROM app_practice_log__sessions",
-          "expect": { "status": 200, "rowCount": 0 }
+          "expect": {
+            "status": 200,
+            "rowCount": 0
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "UPDATE app_practice_log__sessions SET verified_by = ?, verified_at = ? WHERE id = ? AND verified_at = ''",
-          "params": ["{{parent}}", "2026-01-05T19:00:00Z", "s1"],
-          "expect": { "status": 200 }
+          "params": [
+            "{{parent}}",
+            "2026-01-05T19:00:00Z",
+            "s1"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
@@ -55,210 +92,567 @@
           "expect": {
             "status": 200,
             "rowCount": 1,
-            "rowsContain": [{ "id": "s1", "minutes": 30, "verified_at": "2026-01-05T19:00:00Z" }]
+            "rowsContain": [
+              {
+                "id": "s1",
+                "minutes": 30,
+                "verified_at": "2026-01-05T19:00:00Z"
+              }
+            ]
           }
         }
       ]
     },
     {
       "name": "a child cannot log a session that arrives already verified",
-      "members": { "parent": "adult", "kid": "child" },
+      "members": {
+        "parent": "adult",
+        "kid": "child"
+      },
       "steps": [
         {
           "action": "db",
           "as": "kid",
           "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["s_forged", "act_a", "{{kid}}", "2026-01-05", 600, "manual", "", "{{parent}}", "2026-01-05T17:00:00Z", "2026-01-05T17:00:00Z"],
-          "expect": { "status": 403 }
+          "params": [
+            "s_forged",
+            "act_a",
+            "{{kid}}",
+            "2026-01-05",
+            600,
+            "manual",
+            "",
+            "{{parent}}",
+            "2026-01-05T17:00:00Z",
+            "2026-01-05T17:00:00Z"
+          ],
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "SELECT id FROM app_practice_log__sessions",
-          "expect": { "status": 200, "rowCount": 0 }
+          "expect": {
+            "status": 200,
+            "rowCount": 0
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["s_parent", "act_a", "{{kid}}", "2026-01-05", 20, "manual", "", "{{parent}}", "2026-01-05T17:00:00Z", "2026-01-05T17:00:00Z"],
-          "expect": { "status": 200 }
+          "params": [
+            "s_parent",
+            "act_a",
+            "{{kid}}",
+            "2026-01-05",
+            20,
+            "manual",
+            "",
+            "{{parent}}",
+            "2026-01-05T17:00:00Z",
+            "2026-01-05T17:00:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "kid",
           "sql": "SELECT id, minutes FROM app_practice_log__sessions",
-          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "s_parent", "minutes": 20 }] }
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "s_parent",
+                "minutes": 20
+              }
+            ]
+          }
         }
       ]
     },
     {
       "name": "a child cannot log practice under a sibling's name — the owner column is forced to the caller",
-      "members": { "kidA": "child", "kidB": "child" },
+      "members": {
+        "kidA": "child",
+        "kidB": "child"
+      },
       "steps": [
         {
           "action": "db",
           "as": "kidA",
           "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["s_planted", "act_b", "{{kidB}}", "2026-01-05", 45, "manual", "", "2026-01-05T17:00:00Z"],
-          "expect": { "status": 200 }
+          "params": [
+            "s_planted",
+            "act_b",
+            "{{kidB}}",
+            "2026-01-05",
+            45,
+            "manual",
+            "",
+            "2026-01-05T17:00:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "kidB",
           "sql": "SELECT id FROM app_practice_log__sessions",
-          "expect": { "status": 200, "rowCount": 0 }
+          "expect": {
+            "status": 200,
+            "rowCount": 0
+          }
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "SELECT id FROM app_practice_log__sessions",
-          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "s_planted" }] }
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "s_planted"
+              }
+            ]
+          }
         }
       ]
     },
     {
       "name": "only adults set what is practised and the goal; a child sees their own activities and not a sibling's",
-      "members": { "parent": "adult", "kidA": "child", "kidB": "child" },
+      "members": {
+        "parent": "adult",
+        "kidA": "child",
+        "kidB": "child"
+      },
       "steps": [
         {
           "action": "db",
           "as": "kidA",
           "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, archived_at, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["act_easy", "{{kidA}}", "Piano", "🎹", 1, 1, "", "{{kidA}}", "2026-01-01T00:00:00Z"],
-          "expect": { "status": 403 }
+          "params": [
+            "act_easy",
+            "{{kidA}}",
+            "Piano",
+            "🎹",
+            1,
+            1,
+            "",
+            "{{kidA}}",
+            "2026-01-01T00:00:00Z"
+          ],
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, archived_at, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["act_a", "{{kidA}}", "Piano", "🎹", 20, 5, "", "{{parent}}", "2026-01-01T00:00:00Z"],
-          "expect": { "status": 200 }
+          "params": [
+            "act_a",
+            "{{kidA}}",
+            "Piano",
+            "🎹",
+            20,
+            5,
+            "",
+            "{{parent}}",
+            "2026-01-01T00:00:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, archived_at, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["act_b", "{{kidB}}", "Free throws", "🏀", 15, 3, "", "{{parent}}", "2026-01-01T00:00:01Z"],
-          "expect": { "status": 200 }
+          "params": [
+            "act_b",
+            "{{kidB}}",
+            "Free throws",
+            "🏀",
+            15,
+            3,
+            "",
+            "{{parent}}",
+            "2026-01-01T00:00:01Z"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "UPDATE app_practice_log__activities SET target_minutes = 1 WHERE id = 'act_a'",
-          "expect": { "status": 403 }
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "SELECT * FROM app_practice_log__activities WHERE archived_at = '' ORDER BY created_at, id LIMIT 200",
-          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "act_a", "name": "Piano", "target_minutes": 20 }] }
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "act_a",
+                "name": "Piano",
+                "target_minutes": 20
+              }
+            ]
+          }
         },
         {
           "action": "named",
           "as": "kidB",
           "kind": "query",
           "name": "activities",
-          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "act_b", "name": "Free throws" }] }
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "act_b",
+                "name": "Free throws"
+              }
+            ]
+          }
         },
         {
           "action": "named",
           "as": "parent",
           "kind": "query",
           "name": "activities",
-          "expect": { "status": 200, "rowCount": 2 }
+          "expect": {
+            "status": 200,
+            "rowCount": 2
+          }
         }
       ]
     },
     {
       "name": "only an adult can announce a verified session or a met weekly goal",
-      "members": { "parent": "adult", "kid": "child" },
+      "members": {
+        "parent": "adult",
+        "kid": "child"
+      },
       "steps": [
         {
           "action": "publish",
           "as": "kid",
           "type": "practice-log.session_verified",
           "subject_id": "{{kid}}",
-          "payload": { "session_id": "s1", "member_id": "{{kid}}", "activity_id": "act_a", "minutes": 600, "practice_date": "2026-01-05" },
-          "expect": { "status": 403 }
+          "payload": {
+            "session_id": "s1",
+            "member_id": "{{kid}}",
+            "activity_id": "act_a",
+            "minutes": 600,
+            "practice_date": "2026-01-05"
+          },
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "publish",
           "as": "kid",
           "type": "practice-log.weekly_goal_met",
           "subject_id": "{{kid}}",
-          "payload": { "member_id": "{{kid}}", "activity_id": "act_a", "week_start": "2026-01-05", "days_met": 5 },
-          "expect": { "status": 403 }
+          "payload": {
+            "member_id": "{{kid}}",
+            "activity_id": "act_a",
+            "week_start": "2026-01-05",
+            "days_met": 5
+          },
+          "expect": {
+            "status": 403
+          }
         },
         {
           "action": "publish",
           "as": "parent",
           "type": "practice-log.session_verified",
           "subject_id": "{{kid}}",
-          "payload": { "session_id": "s1", "member_id": "{{kid}}", "activity_id": "act_a", "minutes": 30, "practice_date": "2026-01-05" },
-          "expect": { "status": 201 }
+          "payload": {
+            "session_id": "s1",
+            "member_id": "{{kid}}",
+            "activity_id": "act_a",
+            "minutes": 30,
+            "practice_date": "2026-01-05"
+          },
+          "expect": {
+            "status": 201
+          }
         }
       ]
     },
     {
       "name": "a timer belongs to the member who started it, and deleting an activity removes its sessions and timer",
-      "members": { "parent": "adult", "kidA": "child", "kidB": "child" },
+      "members": {
+        "parent": "adult",
+        "kidA": "child",
+        "kidB": "child"
+      },
       "steps": [
         {
           "action": "seedRaw",
           "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, archived_at, created_by, created_at) VALUES ('act_a', ?, 'Piano', '🎹', 20, 5, '', ?, '2026-01-01T00:00:00Z')",
-          "params": ["{{kidA}}", "{{parent}}"]
+          "params": [
+            "{{kidA}}",
+            "{{parent}}"
+          ]
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "INSERT INTO app_practice_log__timers (member_id, activity_id, started_at) VALUES (?, ?, ?)",
-          "params": ["{{kidA}}", "act_a", "2026-01-05T17:00:00Z"],
-          "expect": { "status": 200 }
+          "params": [
+            "{{kidA}}",
+            "act_a",
+            "2026-01-05T17:00:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "kidB",
           "sql": "SELECT * FROM app_practice_log__timers LIMIT 50",
-          "expect": { "status": 200, "rowCount": 0 }
+          "expect": {
+            "status": 200,
+            "rowCount": 0
+          }
         },
         {
           "action": "db",
           "as": "kidB",
           "sql": "DELETE FROM app_practice_log__timers WHERE member_id = ?",
-          "params": ["{{kidA}}"]
+          "params": [
+            "{{kidA}}"
+          ]
         },
         {
           "action": "db",
           "as": "kidA",
           "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          "params": ["s1", "act_a", "{{kidA}}", "2026-01-05", 25, "timer", "", "2026-01-05T17:25:00Z"],
-          "expect": { "status": 200 }
+          "params": [
+            "s1",
+            "act_a",
+            "{{kidA}}",
+            "2026-01-05",
+            25,
+            "timer",
+            "",
+            "2026-01-05T17:25:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "SELECT * FROM app_practice_log__timers LIMIT 50",
-          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "activity_id": "act_a" }] }
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "activity_id": "act_a"
+              }
+            ]
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "DELETE FROM app_practice_log__activities WHERE id = ?",
-          "params": ["act_a"],
-          "expect": { "status": 200 }
+          "params": [
+            "act_a"
+          ],
+          "expect": {
+            "status": 200
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "SELECT id FROM app_practice_log__sessions",
-          "expect": { "status": 200, "rowCount": 0 }
+          "expect": {
+            "status": 200,
+            "rowCount": 0
+          }
         },
         {
           "action": "db",
           "as": "parent",
           "sql": "SELECT * FROM app_practice_log__timers LIMIT 50",
-          "expect": { "status": 200, "rowCount": 0 }
+          "expect": {
+            "status": 200,
+            "rowCount": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "logging a session stamps the activity with the day it was last practised; a child cannot set the stamp, and an adult resets it when removing a session",
+      "members": {
+        "parent": "adult",
+        "kid": "child"
+      },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, archived_at, created_by, created_at) VALUES ('act_a', ?, 'Piano', '🎹', 20, 5, '', ?, '2026-01-01T00:00:00Z')",
+          "params": [
+            "{{kid}}",
+            "{{parent}}"
+          ]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, last_practice_date FROM app_practice_log__activities",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "act_a",
+                "last_practice_date": ""
+              }
+            ]
+          }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "params": [
+            "s1",
+            "act_a",
+            "{{kid}}",
+            "2026-01-05",
+            20,
+            "timer",
+            "",
+            "2026-01-05T17:00:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, last_practice_date FROM app_practice_log__activities",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "act_a",
+                "last_practice_date": "2026-01-05"
+              }
+            ]
+          }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "params": [
+            "s0",
+            "act_a",
+            "{{kid}}",
+            "2026-01-03",
+            15,
+            "manual",
+            "",
+            "2026-01-05T17:05:00Z"
+          ],
+          "expect": {
+            "status": 200
+          }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, last_practice_date FROM app_practice_log__activities",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "act_a",
+                "last_practice_date": "2026-01-05"
+              }
+            ]
+          }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "UPDATE app_practice_log__activities SET last_practice_date = ? WHERE id = ?",
+          "params": [
+            "2026-01-09",
+            "act_a"
+          ],
+          "expect": {
+            "status": 403
+          }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "DELETE FROM app_practice_log__sessions WHERE id = ?",
+          "params": [
+            "s1"
+          ],
+          "expect": {
+            "status": 200
+          }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "UPDATE app_practice_log__activities SET last_practice_date = ? WHERE id = ?",
+          "params": [
+            "2026-01-03",
+            "act_a"
+          ],
+          "expect": {
+            "status": 200
+          }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, last_practice_date FROM app_practice_log__activities",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [
+              {
+                "id": "act_a",
+                "last_practice_date": "2026-01-03"
+              }
+            ]
+          }
         }
       ]
     }

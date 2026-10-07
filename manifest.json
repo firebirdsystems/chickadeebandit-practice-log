@@ -25,6 +25,9 @@
     "requires_approval": false
   },
   "storage": "db",
+  "db_plaintext_columns": [
+    "last_practice_date"
+  ],
   "preload": {
     "activities": {
       "sql": "SELECT * FROM app_practice_log__activities WHERE archived_at = '' ORDER BY created_at, id LIMIT 200"
@@ -117,6 +120,16 @@
       }
     ]
   },
+  "write_effects": {
+    "sessions": {
+      "insert": [
+        {
+          "label": "last_practice_date",
+          "statement": "UPDATE app_practice_log__activities SET last_practice_date = (SELECT COALESCE(MAX(s.practice_date), '') FROM app_practice_log__sessions s WHERE s.activity_id = app_practice_log__activities.id) WHERE id = :new.activity_id"
+        }
+      ]
+    }
+  },
   "glance": {
     "source": {
       "kind": "sql",
@@ -127,6 +140,13 @@
       "count": "n",
       "label": "practice sessions to verify",
       "severity": "info"
+    }
+  },
+  "agenda": {
+    "kind": "task",
+    "source": {
+      "kind": "sql",
+      "query": "SELECT id AS id, name AS title, target_minutes || ' min' AS subtitle, :today AS when_at, member_id AS member_id, (last_practice_date = :today) AS done FROM app_practice_log__activities WHERE archived_at = '' AND last_practice_date <= :today ORDER BY created_at, id LIMIT 20"
     }
   },
   "ai_access": {

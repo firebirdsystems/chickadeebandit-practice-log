@@ -174,6 +174,14 @@ export function membersWithActivities(members, activities) {
   return members.filter(m => ids.has(m.id));
 }
 
+/** The most recent day an activity was practised among these sessions, or "".
+ *  Mirrors what the hub stores in `activities.last_practice_date`. */
+export function latestPracticeDate(sessions, activityId) {
+  let latest = "";
+  for (const s of sessions) if (s.activity_id === activityId && s.practice_date > latest) latest = s.practice_date;
+  return latest;
+}
+
 export function minutesOn(sessions, memberId, dateStr) {
   let total = 0;
   for (const s of sessions) if (s.member_id === memberId && s.practice_date === dateStr) total += Number(s.minutes) || 0;

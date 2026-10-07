@@ -12,6 +12,7 @@ Kids time or log practice for piano, a language, free throws or anything else. A
 - A week of dots per activity shows the days the goal was met, the days waiting for a parent, and the days that fell short.
 - Parents see a queue of sessions to verify, can correct the minutes, and can log a session themselves.
 - A home-screen badge counts the sessions waiting to be verified.
+- Each activity is a task on Today, ticked once it has been practised that day.
 
 ## Who can do what
 
@@ -35,6 +36,8 @@ Both are published by an adult's device, and the hub refuses them from a child.
 | `practice-log.weekly_goal_met` | Verifying a session completes the week's goal. Once per activity and week. | `member_id`, `activity_id`, `week_start`, `days_met` |
 
 The member who practised is the event's `subject_id`.
+
+Both are in the hub's event catalog, so a household can build automations on them. Three apps suggest one when installed alongside this app: Piggy Bank banks verified minutes as screen time, and Rewards and Points & Recognition award points for a met weekly goal.
 
 ## Install
 
