@@ -1,0 +1,508 @@
+{
+ "seed": [
+  {
+   "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, created_by, created_at, last_practice_date) VALUES (?, ?, ?, ?, 20, 5, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days'), date('now','-0 days'))",
+   "params": [
+    "pla-1",
+    "{{me}}",
+    "Piano",
+    "🎹",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, created_by, created_at, last_practice_date) VALUES (?, ?, ?, ?, 10, 4, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days'), date('now','-0 days'))",
+   "params": [
+    "pla-2",
+    "{{me}}",
+    "Spanish",
+    "🗣️",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, created_by, created_at, last_practice_date) VALUES (?, ?, ?, ?, 15, 3, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-38 days'), date('now','-1 days'))",
+   "params": [
+    "pla-3",
+    "{{me}}",
+    "Guitar",
+    "🎸",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, created_by, created_at, last_practice_date) VALUES (?, ?, ?, ?, 30, 2, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-37 days'), date('now','-2 days'))",
+   "params": [
+    "pla-4",
+    "{{me}}",
+    "Sketching",
+    "🎨",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__activities (id, member_id, name, icon, target_minutes, target_days, created_by, created_at, last_practice_date) VALUES (?, ?, ?, ?, 10, 5, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-36 days'), date('now','-0 days'))",
+   "params": [
+    "pla-5",
+    "{{me}}",
+    "Chess puzzles",
+    "♟️",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-0 days'), 25, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-0 days','-3 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-0 days','-3 minutes'))",
+   "params": [
+    "pls-1",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "Scales and the new minuet",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-1 days'), 20, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','-6 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','-6 minutes'))",
+   "params": [
+    "pls-2",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-2 days'), 22, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-9 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-9 minutes'))",
+   "params": [
+    "pls-3",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-4 days'), 15, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days','-12 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days','-12 minutes'))",
+   "params": [
+    "pls-4",
+    "pla-1",
+    "{{me}}",
+    "manual",
+    "Short one before dinner",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-5 days'), 30, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-15 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-15 minutes'))",
+   "params": [
+    "pls-5",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "Lesson day",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-7 days'), 20, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days','-18 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days','-18 minutes'))",
+   "params": [
+    "pls-6",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-8 days'), 21, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days','-21 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days','-21 minutes'))",
+   "params": [
+    "pls-7",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-10 days'), 25, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days','-24 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days','-24 minutes'))",
+   "params": [
+    "pls-8",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-12 days'), 20, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days','-27 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days','-27 minutes'))",
+   "params": [
+    "pls-9",
+    "pla-1",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-15 days'), 18, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-15 days','-30 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-15 days','-30 minutes'))",
+   "params": [
+    "pls-10",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-19 days'), 24, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','-33 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-19 days','-33 minutes'))",
+   "params": [
+    "pls-11",
+    "pla-1",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, date('now','-0 days'), 12, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-0 days','-36 minutes'))",
+   "params": [
+    "pls-12",
+    "pla-2",
+    "{{me}}",
+    "timer",
+    "Unit 4 vocabulary"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-1 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','-39 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','-39 minutes'))",
+   "params": [
+    "pls-13",
+    "pla-2",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-3 days'), 15, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days','-42 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days','-42 minutes'))",
+   "params": [
+    "pls-14",
+    "pla-2",
+    "{{me}}",
+    "manual",
+    "Podcast episode",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-4 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days','-45 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-4 days','-45 minutes'))",
+   "params": [
+    "pls-15",
+    "pla-2",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-6 days'), 11, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-48 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-48 minutes'))",
+   "params": [
+    "pls-16",
+    "pla-2",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-9 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-51 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-51 minutes'))",
+   "params": [
+    "pls-17",
+    "pla-2",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-11 days'), 14, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days','-54 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-11 days','-54 minutes'))",
+   "params": [
+    "pls-18",
+    "pla-2",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-13 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','-57 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','-57 minutes'))",
+   "params": [
+    "pls-19",
+    "pla-2",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-17 days'), 12, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days','-60 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days','-60 minutes'))",
+   "params": [
+    "pls-20",
+    "pla-2",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, created_at) VALUES (?, ?, ?, date('now','-1 days'), 18, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','-63 minutes'))",
+   "params": [
+    "pls-21",
+    "pla-3",
+    "{{me}}",
+    "timer",
+    "Barre chords still buzzing"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-3 days'), 15, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days','-66 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days','-66 minutes'))",
+   "params": [
+    "pls-22",
+    "pla-3",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-6 days'), 20, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-69 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-69 minutes'))",
+   "params": [
+    "pls-23",
+    "pla-3",
+    "{{me}}",
+    "timer",
+    "Learned the intro riff",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-8 days'), 15, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days','-72 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-8 days','-72 minutes'))",
+   "params": [
+    "pls-24",
+    "pla-3",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-10 days'), 16, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days','-75 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-10 days','-75 minutes'))",
+   "params": [
+    "pls-25",
+    "pla-3",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-14 days'), 15, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-14 days','-78 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-14 days','-78 minutes'))",
+   "params": [
+    "pls-26",
+    "pla-3",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-16 days'), 25, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days','-81 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-16 days','-81 minutes'))",
+   "params": [
+    "pls-27",
+    "pla-3",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-21 days'), 15, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-21 days','-84 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-21 days','-84 minutes'))",
+   "params": [
+    "pls-28",
+    "pla-3",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-2 days'), 35, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-87 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-87 minutes'))",
+   "params": [
+    "pls-29",
+    "pla-4",
+    "{{me}}",
+    "manual",
+    "Hands, again",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-5 days'), 30, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-90 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-90 minutes'))",
+   "params": [
+    "pls-30",
+    "pla-4",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-9 days'), 40, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-93 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-93 minutes'))",
+   "params": [
+    "pls-31",
+    "pla-4",
+    "{{me}}",
+    "timer",
+    "Park bench studies",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-12 days'), 30, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days','-96 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-12 days','-96 minutes'))",
+   "params": [
+    "pls-32",
+    "pla-4",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-18 days'), 45, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-18 days','-99 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-18 days','-99 minutes'))",
+   "params": [
+    "pls-33",
+    "pla-4",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-23 days'), 30, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-23 days','-102 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-23 days','-102 minutes'))",
+   "params": [
+    "pls-34",
+    "pla-4",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-0 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-0 days','-105 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-0 days','-105 minutes'))",
+   "params": [
+    "pls-35",
+    "pla-5",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, created_at) VALUES (?, ?, ?, date('now','-1 days'), 12, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-1 days','-108 minutes'))",
+   "params": [
+    "pls-36",
+    "pla-5",
+    "{{me}}",
+    "timer"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-2 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-111 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-111 minutes'))",
+   "params": [
+    "pls-37",
+    "pla-5",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, note, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-3 days'), 15, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days','-114 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-3 days','-114 minutes'))",
+   "params": [
+    "pls-38",
+    "pla-5",
+    "{{me}}",
+    "timer",
+    "Finally got the knight fork set",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-5 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-117 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-117 minutes'))",
+   "params": [
+    "pls-39",
+    "pla-5",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-6 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-120 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-120 minutes'))",
+   "params": [
+    "pls-40",
+    "pla-5",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-7 days'), 11, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days','-123 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-7 days','-123 minutes'))",
+   "params": [
+    "pls-41",
+    "pla-5",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-9 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-126 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 days','-126 minutes'))",
+   "params": [
+    "pls-42",
+    "pla-5",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-13 days'), 20, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','-129 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-13 days','-129 minutes'))",
+   "params": [
+    "pls-43",
+    "pla-5",
+    "{{me}}",
+    "manual",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__sessions (id, activity_id, member_id, practice_date, minutes, source, verified_by, verified_at, created_at) VALUES (?, ?, ?, date('now','-20 days'), 10, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-132 minutes'), strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-132 minutes'))",
+   "params": [
+    "pls-44",
+    "pla-5",
+    "{{me}}",
+    "timer",
+    "{{me}}"
+   ]
+  },
+  {
+   "sql": "INSERT INTO app_practice_log__timers (member_id, activity_id, started_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-9 minutes'))",
+   "params": [
+    "{{me}}",
+    "pla-3"
+   ]
+  }
+ ]
+}
