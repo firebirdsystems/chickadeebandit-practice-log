@@ -265,14 +265,14 @@ async function refresh() {
     loaded = true;
     loadFailed = false;
   } catch (e) {
-    if (loaded) error = e.message;
+    if (loaded) { console.error(e); error = "Couldn’t refresh the practice log."; }
     else loadFailed = true;
   }
   ready = true;
   render();
 }
 
-/** Run a write; on failure show the reason and re-read, so the screen never
+/** Run a write; on failure say so in this app's words and re-read, so the screen never
  *  keeps an optimistic change the hub refused. */
 async function attempt(fn) {
   try {
@@ -281,7 +281,9 @@ async function attempt(fn) {
     return true;
   } catch (e) {
     try { await loadData(); } catch { /* keep what we have */ }
-    error = e.message || "Something went wrong.";
+    // The hub's own error text goes to the console, never to the page.
+    console.error(e);
+    error = e?.forUser ? e.message : "Couldn’t save — try again.";
     render();
     return false;
   }
