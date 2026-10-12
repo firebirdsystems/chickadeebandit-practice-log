@@ -135,6 +135,8 @@
     .quick button { font: inherit; font-size: .85rem; font-weight: 700; padding: 6px 12px; border-radius: 18px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; min-height: 34px; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
     .modal-actions .spacer { flex: 1; }
+    .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.9rem; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .load-error-retry { background: none; border: 1px solid currentColor; border-radius: 8px; padding: 5px 10px; font: inherit; font-weight: 600; color: inherit; cursor: pointer; flex-shrink: 0; }
   </style>
   <base href="/run/practice-log/">
 </head>
@@ -186,6 +188,8 @@ let searchQ = "";
 let error = "";
 let modalEl = null;
 let ready = false;
+let loaded = false;       // a load has succeeded at least once
+let loadFailed = false;   // the first load failed: banner instead of the page
 
 const me = () => demoMe ?? HUB_MEMBER;
 const today = () => hubToday();
@@ -206,10 +210,13 @@ async function loadMembers() {
       { id: "demo-leo", name: "Leo", role: "child" },
     ];
   } else {
-    try {
-      const res = await fetch(`${CONTEXT}?keys=family.members`);
-      members = ((await res.json())["family.members"]) ?? [];
-    } catch { members = []; }
+    // A failed read throws: it is a failed load, never a household of nobody.
+    const res = await fetch(`${CONTEXT}?keys=family.members`);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || data === null || typeof data !== "object" || Array.isArray(data)) throw new Error("Couldn’t reach the hub. Try again.");
+    // A 200 that names the key in `$errors` is the hub saying it could not read it.
+    if (Array.isArray(data.$errors) && data.$errors.includes("family.members")) throw new Error("Couldn’t reach the hub. Try again.");
+    members = data["family.members"] ?? [];
   }
   memberMap = new Map(members.map(m => [m.id, m]));
   if (!HUB_MEMBER && !demoMe) demoMe = members.find(m => !isAdult(m)) ?? members[0] ?? null;
@@ -255,8 +262,11 @@ async function refresh() {
     await loadMembers();
     await loadData();
     error = "";
+    loaded = true;
+    loadFailed = false;
   } catch (e) {
-    error = e.message;
+    if (loaded) error = e.message;
+    else loadFailed = true;
   }
   ready = true;
   render();
@@ -400,20 +410,26 @@ async function verifySessions(ids) {
   const who = me();
   if (!canVerify(who)) return;
   const stamp = nowIso();
-  const targets = sessions.filter(s => ids.includes(s.id) && !isVerified(s));
+  let targets = sessions.filter(s => ids.includes(s.id) && !isVerified(s));
   if (!targets.length) return;
   const before = sessions;
   const ok = await attempt(async () => {
     // `AND verified_at = ''` keeps the first parent's stamp if two tap at once.
-    await db.batch(targets.map(s => ({
+    const results = await db.batch(targets.map(s => ({
       sql: "UPDATE app_practice_log__sessions SET verified_by = ?, verified_at = ? WHERE id = ? AND verified_at = ''",
       params: [who.id, stamp, s.id],
     })));
+    // A session the other parent stamped first (or one since removed) changes
+    // nothing here: it is neither marked as this parent's nor announced again,
+    // and the re-read shows whose stamp it carries.
+    const missed = DEMO ? [] : targets.filter((s, i) => results[i]?.changed === 0);
+    targets = targets.filter(s => !missed.includes(s));
     const done = new Set(targets.map(s => s.id));
     sessions = sessions.map(s => (done.has(s.id) ? { ...s, verified_by: who.id, verified_at: stamp } : s));
+    if (missed.length) await loadData().catch(() => {});
     render();
   });
-  if (!ok) return;
+  if (!ok || !targets.length) return;
   const verifiedRows = targets.map(s => ({ ...s, verified_by: who.id, verified_at: stamp }));
   announceVerified(verifiedRows, before);
   const byMember = new Map();
@@ -740,6 +756,13 @@ function renderArchived() {
 function render() {
   const root = document.getElementById("root");
   if (!ready) return;
+  if (loadFailed) {
+    root.innerHTML = `
+      <div class="topbar"><h1>${glyph("metronome")} Practice</h1></div>
+      <div class="load-error" data-testid="load-error" role="alert"><span>Couldn’t load your practice.</span>
+        <button type="button" class="load-error-retry" data-testid="load-retry">Try again</button></div>`;
+    return;
+  }
   const who = me();
   root.innerHTML = `
     <div class="topbar">
@@ -879,6 +902,7 @@ function openSessionModal(id) {
 
 // --- Events ------------------------------------------------------------------
 document.addEventListener("click", (event) => {
+  if (event.target.closest('[data-testid="load-retry"]')) { refresh(); return; }
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const id = target.getAttribute("data-id") ?? "";
