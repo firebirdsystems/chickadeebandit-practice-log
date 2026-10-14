@@ -173,8 +173,5 @@
   "nav": {
     "label": "Practice"
   },
-  "resource_limits": {
-    "max_db_bytes": 52428800
-  },
   "icon": "🎹"
 }
