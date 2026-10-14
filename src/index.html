@@ -155,7 +155,7 @@ import {
   clampMinutes, formatMinutes, elapsedMs, timerMinutes, formatClock,
   canManageActivities, canVerify, canLogFor, canEditSession, isVerified,
   activityWeek, crossedWeeklyGoal, pendingSessions, membersWithActivities, latestPracticeDate,
-  searchableFields,
+  searchableFields, outcomeUnknown, storedDiffers, SAVED_AS_FIRST, failureLine,
 } from "./logic.js";
 
 // --- Hub runtime globals (empty in demo mode) --------------------------------
@@ -273,8 +273,9 @@ async function refresh() {
 }
 
 /** Run a write; on failure say so in this app's words and re-read, so the screen never
- *  keeps an optimistic change the hub refused. */
-async function attempt(fn) {
+ *  keeps an optimistic change the hub refused. `words` is the write's `{ action, thing }`
+ *  for failureLine, or a fixed line for a read. */
+async function attempt(fn, words) {
   try {
     error = "";
     await fn();
@@ -283,11 +284,30 @@ async function attempt(fn) {
     try { await loadData(); } catch { /* keep what we have */ }
     // The hub's own error text goes to the console, never to the page.
     console.error(e);
-    error = e?.forUser ? e.message : "Couldn’t save — try again.";
+    error = typeof words === "string" ? (e?.forUser ? e.message : words) : failureLine(e, words);
     render();
     return false;
   }
 }
+
+function userError(msg) { return Object.assign(new Error(msg), { forUser: true }); }
+
+/**
+ * A write that changed nothing (or a batch `requireChanges` rolled back): re-read
+ * the row so the line can say "removed" (gone) or "permission" (still there — the
+ * hub narrowed the write). Thrown as the app's own words for attempt() to show.
+ */
+async function changedNothing(table, id, words) {
+  let found = null;
+  try { found = !!(await db(`SELECT id FROM ${table} WHERE id = ?`, [id])).rows?.[0]; }
+  catch (readErr) { console.error(readErr); }
+  return userError(failureLine(null, { ...words, found }));
+}
+const unchanged = (result) => !DEMO && Number(result?.changed ?? 0) === 0;
+const SESSION_SAVE = { action: "save the session", thing: "session" };
+const SESSION_REMOVE = { action: "remove the session", thing: "session" };
+const ACTIVITY_SAVE = { action: "save the activity", thing: "activity" };
+const ACTIVITY_DELETE = { action: "delete the activity", thing: "activity" };
 
 // --- Side effects (best-effort, never block the write) ------------------------
 function notify(args) {
@@ -328,7 +348,7 @@ function announceVerified(verifiedRows, before) {
 }
 
 // --- Writes ------------------------------------------------------------------
-async function saveSession({ activity, minutes, date, note, source, stopTimerFor }) {
+async function saveSession({ activity, minutes, date, note, source, stopTimerFor, form, timer }) {
   const who = me();
   if (!who || !canLogFor(who, activity.member_id)) return;
   const stamp = nowIso();
@@ -336,8 +356,13 @@ async function saveSession({ activity, minutes, date, note, source, stopTimerFor
   // it is written. A child's INSERT must not name the verified columns at all:
   // they are adult-only, and the hub refuses the whole statement otherwise.
   const verified = canVerify(who);
-  const row = {
-    id: crypto.randomUUID(), activity_id: activity.id, member_id: activity.member_id,
+  // The id is the form's (or the running timer's), minted on its first send
+  // and sent on every retry: a try whose answer was lost may have stored the
+  // session, and a second press must find it rather than log the minutes twice.
+  const pinHost = form?.dataset ?? timer ?? null;
+  const id = pinHost ? (pinHost.rowId ??= crypto.randomUUID()) : crypto.randomUUID();
+  let row = {
+    id, activity_id: activity.id, member_id: activity.member_id,
     practice_date: date, minutes, source, note,
     verified_by: verified ? who.id : "", verified_at: verified ? stamp : "", created_at: stamp,
   };
@@ -354,19 +379,49 @@ async function saveSession({ activity, minutes, date, note, source, stopTimerFor
   statements.push(insert);
 
   const before = sessions;
+  let savedNote = "";
   const ok = await attempt(async () => {
-    await db.batch(statements);
-    sessions = [row, ...sessions].sort((a, b) => b.practice_date.localeCompare(a.practice_date) || String(b.created_at).localeCompare(String(a.created_at)));
+    try {
+      await db.batch(statements);
+    } catch (e) {
+      // Unknown outcome: read the session back by the pinned id. Found means an
+      // earlier try landed (the batch is all or nothing, so its timer went with
+      // it) and its success path never ran, so it runs now, once. Not found, or
+      // the read failed: the save fails, the id stays pinned.
+      if (DEMO || !outcomeUnknown(e)) throw e;
+      let stored = null;
+      try { stored = (await db("SELECT * FROM app_practice_log__sessions WHERE id = ?", [id])).rows?.[0] ?? null; }
+      catch (readErr) {
+        // The id is ours: with the read-back failed, a UNIQUE answer may be this
+        // form's own first try, so nothing is known — "try again", not "already exists".
+        console.error(readErr);
+        throw new Error("create outcome unknown", { cause: e });
+      }
+      if (!stored) throw e;
+      console.error(e);
+      // Edited since that first try: what was stored is kept, and said so. (A
+      // timer's minutes grow between tries; nobody edited them.)
+      if (!timer && storedDiffers(stored, { activity_id: activity.id, practice_date: date, minutes, note })) savedNote = SAVED_AS_FIRST;
+      row = stored;
+    }
+    if (pinHost) delete pinHost.rowId;
+    sessions = [row, ...sessions.filter(s => s.id !== row.id)].sort((a, b) => b.practice_date.localeCompare(a.practice_date) || String(b.created_at).localeCompare(String(a.created_at)));
     if (stopTimerFor) timers = timers.filter(t => t.member_id !== stopTimerFor);
     closeModal();
+    error = savedNote;
     render();
-  });
-  if (!ok) return;
-  if (verified) {
+  }, SESSION_SAVE);
+  if (!ok) {
+    // The form stays open as typed, its button free to send again.
+    const button = form?.isConnected ? form.querySelector("button[type=submit]") : null;
+    if (button) { button.disabled = false; button.textContent = button.dataset.label ?? "Save"; }
+    return;
+  }
+  if (isVerified(row)) {
     announceVerified([row], before);
   } else {
     const ids = adults().map(m => m.id);
-    if (ids.length) notify({ title: "Practice to verify", body: `${memberName(row.member_id)} logged ${formatMinutes(minutes)} of ${activity.name}.`, audience: ids });
+    if (ids.length) notify({ title: "Practice to verify", body: `${memberName(row.member_id)} logged ${formatMinutes(Number(row.minutes) || 0)} of ${activityById(row.activity_id)?.name ?? activity.name}.`, audience: ids });
   }
 }
 
@@ -383,7 +438,7 @@ async function startTimer(activityId) {
     ]);
     timers = [...timers.filter(t => t.member_id !== who.id), row];
     render();
-  });
+  }, { action: "start the timer", thing: "timer" });
 }
 
 async function stopTimer(memberId) {
@@ -392,7 +447,7 @@ async function stopTimer(memberId) {
   if (!timer || !activity) return cancelTimer(memberId, true);
   await saveSession({
     activity, minutes: timerMinutes(timer.started_at, Date.now()),
-    date: today(), note: "", source: "timer", stopTimerFor: memberId,
+    date: today(), note: "", source: "timer", stopTimerFor: memberId, timer,
   });
 }
 
@@ -405,7 +460,7 @@ async function cancelTimer(memberId, silent = false) {
     await db("DELETE FROM app_practice_log__timers WHERE member_id = ?", [memberId]);
     timers = timers.filter(t => t.member_id !== memberId);
     render();
-  });
+  }, { action: "stop the timer", thing: "timer" });
 }
 
 async function verifySessions(ids) {
@@ -430,7 +485,7 @@ async function verifySessions(ids) {
     sessions = sessions.map(s => (done.has(s.id) ? { ...s, verified_by: who.id, verified_at: stamp } : s));
     if (missed.length) await loadData().catch(() => {});
     render();
-  });
+  }, { action: "verify the practice", thing: "session" });
   if (!ok || !targets.length) return;
   const verifiedRows = targets.map(s => ({ ...s, verified_by: who.id, verified_at: stamp }));
   announceVerified(verifiedRows, before);
@@ -451,7 +506,7 @@ async function updateSession(id, form) {
   await attempt(async () => {
     const before = sessions.find(s => s.id === id);
     const next = sessions.map(s => (s.id === id ? { ...s, minutes, practice_date: date, note } : s));
-    const statements = [{ sql: "UPDATE app_practice_log__sessions SET minutes = ?, practice_date = ?, note = ? WHERE id = ?", params: [minutes, date, note, id] }];
+    const statements = [{ sql: "UPDATE app_practice_log__sessions SET minutes = ?, practice_date = ?, note = ? WHERE id = ?", params: [minutes, date, note, id], requireChanges: true }];
     // The hub recomputes an activity's last_practice_date when a session is
     // inserted, not when one is edited or removed. Moving a session to another
     // day is an adult's edit, and an adult may write the activity, so set it
@@ -463,11 +518,14 @@ async function updateSession(id, form) {
         params: [latestPracticeDate(next, before.activity_id), before.activity_id],
       });
     }
-    await db.batch(statements);
+    // requireChanges: a session the hub would not change rolls the batch back (409),
+    // so the activity's stamp is not moved for an edit that did not happen.
+    try { await db.batch(statements); }
+    catch (e) { if (e?.status === 409) throw await changedNothing("app_practice_log__sessions", id, SESSION_SAVE); throw e; }
     sessions = next;
     closeModal();
     render();
-  });
+  }, SESSION_SAVE);
 }
 
 async function deleteSession(id) {
@@ -477,7 +535,7 @@ async function deleteSession(id) {
   await attempt(async () => {
     const removed = sessions.find(s => s.id === id);
     const next = sessions.filter(s => s.id !== id);
-    const statements = [{ sql: "DELETE FROM app_practice_log__sessions WHERE id = ?", params: [id] }];
+    const statements = [{ sql: "DELETE FROM app_practice_log__sessions WHERE id = ?", params: [id], requireChanges: true }];
     // As with an edit: the hub stamps last_practice_date on insert only, so the
     // adult removing a session puts the stamp back to what remains.
     if (removed) {
@@ -486,11 +544,12 @@ async function deleteSession(id) {
         params: [latestPracticeDate(next, removed.activity_id), removed.activity_id],
       });
     }
-    await db.batch(statements);
+    try { await db.batch(statements); }
+    catch (e) { if (e?.status === 409) throw await changedNothing("app_practice_log__sessions", id, SESSION_REMOVE); throw e; }
     sessions = next;
     closeModal();
     render();
-  });
+  }, SESSION_REMOVE);
 }
 
 async function saveActivity(form) {
@@ -506,7 +565,8 @@ async function saveActivity(form) {
   if (button) { button.disabled = true; button.textContent = "Saving…"; }
   const ok = await attempt(async () => {
     if (id) {
-      await db("UPDATE app_practice_log__activities SET name = ?, icon = ?, target_minutes = ?, target_days = ? WHERE id = ?", [name, icon, targetMinutes, targetDays, id]);
+      const result = await db("UPDATE app_practice_log__activities SET name = ?, icon = ?, target_minutes = ?, target_days = ? WHERE id = ?", [name, icon, targetMinutes, targetDays, id]);
+      if (unchanged(result)) throw await changedNothing("app_practice_log__activities", id, ACTIVITY_SAVE);
       activities = activities.map(a => (a.id === id ? { ...a, name, icon, target_minutes: targetMinutes, target_days: targetDays } : a));
     } else {
       const row = {
@@ -521,15 +581,17 @@ async function saveActivity(form) {
     }
     closeModal();
     render();
-  });
+  }, id ? ACTIVITY_SAVE : { action: "add the activity", thing: "activity" });
   if (!ok && button) { button.disabled = false; button.textContent = "Save"; }
 }
 
 async function setArchived(id, on) {
   if (!canManageActivities(me())) return;
   const stamp = on ? nowIso() : "";
+  const archiveWords = { action: on ? "archive the activity" : "restore the activity", thing: "activity" };
   await attempt(async () => {
-    await db("UPDATE app_practice_log__activities SET archived_at = ? WHERE id = ?", [stamp, id]);
+    const result = await db("UPDATE app_practice_log__activities SET archived_at = ? WHERE id = ?", [stamp, id]);
+    if (unchanged(result)) throw await changedNothing("app_practice_log__activities", id, archiveWords);
     if (on) {
       const row = activities.find(a => a.id === id);
       activities = activities.filter(a => a.id !== id);
@@ -543,7 +605,7 @@ async function setArchived(id, on) {
     }
     closeModal();
     render();
-  });
+  }, archiveWords);
 }
 
 async function deleteActivity(id) {
@@ -557,14 +619,15 @@ async function deleteActivity(id) {
   if (!ok) return;
   await attempt(async () => {
     // The manifest's delete_cascades removes its sessions and any running timer.
-    await db("DELETE FROM app_practice_log__activities WHERE id = ?", [id]);
+    const result = await db("DELETE FROM app_practice_log__activities WHERE id = ?", [id]);
+    if (unchanged(result)) throw await changedNothing("app_practice_log__activities", id, ACTIVITY_DELETE);
     activities = activities.filter(a => a.id !== id);
     archived = archived?.filter(a => a.id !== id) ?? null;
     sessions = sessions.filter(s => s.activity_id !== id);
     timers = timers.filter(t => t.activity_id !== id);
     closeModal();
     render();
-  });
+  }, ACTIVITY_DELETE);
 }
 
 async function showArchived() {
@@ -573,7 +636,7 @@ async function showArchived() {
     const { rows } = await db("SELECT * FROM app_practice_log__activities WHERE archived_at <> '' ORDER BY archived_at DESC LIMIT 100");
     archived = rows ?? [];
     render();
-  });
+  }, "Couldn’t load the archived activities.");
 }
 
 // --- Rendering ---------------------------------------------------------------
@@ -950,8 +1013,8 @@ document.addEventListener("submit", (event) => {
     if (!minutes) { field(form, "minutes").focus(); return; }
     if (!isDate(date) || date > today()) { field(form, "date").focus(); return; }
     const button = form.querySelector("button[type=submit]");
-    if (button) { button.disabled = true; button.textContent = "Saving…"; }
-    saveSession({ activity, minutes, date, note: field(form, "note").value.trim(), source: "manual" });
+    if (button) { button.dataset.label ??= button.textContent; button.disabled = true; button.textContent = "Saving…"; }
+    saveSession({ activity, minutes, date, note: field(form, "note").value.trim(), source: "manual", form });
   }
 });
 
