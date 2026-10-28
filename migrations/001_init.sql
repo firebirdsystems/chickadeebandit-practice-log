@@ -3,7 +3,7 @@
 -- target_minutes is the daily goal and target_days is how many days a week it
 -- should be met. archived_at is '' while the activity is in use.
 CREATE TABLE IF NOT EXISTS app_practice_log__activities (
-  id             TEXT PRIMARY KEY,
+  id             TEXT NOT NULL PRIMARY KEY,
   member_id      TEXT NOT NULL,
   name           TEXT NOT NULL,
   icon           TEXT NOT NULL DEFAULT '🎵',
@@ -23,7 +23,7 @@ CREATE INDEX IF NOT EXISTS app_practice_log__activities_active_idx
 -- for adults (see `sessions` in manifest.json). practice_date is the household-
 -- local day as yyyy-mm-dd. source is 'timer' or 'manual'.
 CREATE TABLE IF NOT EXISTS app_practice_log__sessions (
-  id            TEXT PRIMARY KEY,
+  id            TEXT NOT NULL PRIMARY KEY,
   activity_id   TEXT NOT NULL,
   member_id     TEXT NOT NULL,
   practice_date TEXT NOT NULL,
@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS app_practice_log__sessions_activity_idx
 -- A running timer: at most one per member, so a timer started on one device
 -- can be stopped on another. Stopping it inserts a session and deletes the row.
 CREATE TABLE IF NOT EXISTS app_practice_log__timers (
-  member_id   TEXT PRIMARY KEY,
+  member_id   TEXT NOT NULL PRIMARY KEY,
   activity_id TEXT NOT NULL,
   started_at  TEXT NOT NULL
 );
